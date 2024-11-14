@@ -1,0 +1,8 @@
+# Python >= 3.8 required
+
+geopandas>=0.11.0
+numpy>=1.23.1
+pandas>=1.4.3
+scipy>=1.8.1
+Shapely>=1.8.2
+fiona>=1.8.0 

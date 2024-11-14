@@ -1,15 +1,29 @@
-# Dataset Generation for Postcode Level Data
+# NEBULA Dataset Generation
 
 This repository contains scripts for generating the NEBULA dataset, a postcode-level dataset for neighbourhood energy modelling. 
 
 ## Prerequisites
+
+```
+# Create new environment
+conda create -n nebula python=3.10
+
+# Activate environment
+conda activate nebula
+
+# Install requirements
+pip install -r requirements.txt
+```
+
+# Install requirements
+pip install -r requirements.txt
 
 ### Required Data
 #### User provided (not open licence)
 1. Building Stock Data (Verisk)
 3. Postcode Shapefiles (Edina)
 
-#### Provided in Github
+#### Provided in Drive - download zip file and place in input_data_sources
 
 1. Gas and Electricity data (DESNZ) (2022)
 2. ONS ONSUD UPRN to Postcode Mapping (2022)
