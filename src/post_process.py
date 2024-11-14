@@ -3,10 +3,10 @@ import pandas as pd
 import os
 import glob
 from src.pre_process_buildings import *
-from src.postcode_utils import load_ids_from_file
-from src.postcode_utils import setup_logging
+from src.postcode_utils import load_ids_from_file,  check_merge_files
 
-logger = setup_logging()
+from src.logging_config import get_logger
+logger = get_logger(__name__)
 
 # PERC_RANGE_METERS_UPRN = 20
 PERC_UNKNOWN_RES_ALLOWED = 10

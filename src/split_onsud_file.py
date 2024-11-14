@@ -22,6 +22,10 @@ from typing import Tuple, Optional
 from .postcode_utils import check_merge_files, load_onsud_data, find_postcode_for_ONSUD_file
 
 
+from .logging_config import get_logger
+logger = get_logger(__name__)
+
+
 def split_onsud_and_postcodes(path_to_onsud_file: str, 
                              path_to_pcshp: str, 
                              batch_size: int = 10000) -> None:
@@ -55,7 +59,7 @@ def split_onsud_and_postcodes(path_to_onsud_file: str,
     
     # Load and prepare data
     onsud_data, _ = load_onsud_data(path_to_onsud_file, path_to_pcshp)
-    raw_data = pd.read_csv(path_to_onsud_file)
+    raw_data = pd.read_csv(path_to_onsud_file, low_memory=False)
     
     # Get list of postcodes to process
     pcs_list = onsud_data.PCDS.unique().tolist()

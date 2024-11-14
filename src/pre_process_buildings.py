@@ -17,10 +17,12 @@ Modified: 2024
 import pandas as pd
 import numpy as np
 import os 
+from .postcode_utils import check_merge_files
 
-from .postcode_utils import check_merge_files , setup_logging
 
-logger = setup_logging()
+from .logging_config import get_logger
+logger = get_logger(__name__)
+
 
 
 # ============================================================

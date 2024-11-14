@@ -21,6 +21,10 @@ from src.type_proc import run_type_calc
 # from src.orientation_proc import run_orient_calc
 import logging 
 
+from src.logging_config import get_logger
+logger = get_logger(__name__)
+
+
 
 def gen_batch_ids(batch_ids: list, log_file: str, logger: logging.Logger) -> list:
     """Generate batch IDs, excluding already processed ones."""
@@ -40,7 +44,7 @@ def gen_batch_ids(batch_ids: list, log_file: str, logger: logging.Logger) -> lis
 
 def postcode_main(batch_path, data_dir, path_to_onsud_file, path_to_pcshp, INPUT_GPK, 
          region_label, batch_label, attr_lab, process_function, gas_path=None, 
-         elec_path=None, overlap=None, batch_dir=None, overlap_outcode=None):
+         elec_path=None, overlap=None, batch_dir=None, overlap_outcode=None, log_size=100):
     """Main processing function."""
     
     # Setup logging
@@ -71,7 +75,7 @@ def postcode_main(batch_path, data_dir, path_to_onsud_file, path_to_pcshp, INPUT
     parameters = {
         'Batch size': len(batch_ids),
         'Input GPK': INPUT_GPK,
-        'Batch size limit': 100,
+        'SubBatch log limit': log_size,
         'Batch label': batch_label,
         'Gas path': gas_path,
         'Electricity path': elec_path,
@@ -86,7 +90,7 @@ def postcode_main(batch_path, data_dir, path_to_onsud_file, path_to_pcshp, INPUT
         batch_ids=batch_ids,
         onsud_data=onsud_data,
         INPUT_GPK=INPUT_GPK,
-        subbatch_size=100,
+        subbatch_size=log_size,
         batch_label=batch_label,
         log_file=log_file,
         gas_path=gas_path,

@@ -5,30 +5,10 @@ import geopandas as gpd
 from shapely.geometry import box 
 import glob 
 from typing import Tuple, Optional
-import logging
-import argparse
 
+from .logging_config import get_logger
+logger = get_logger(__name__)
 
-def setup_logging():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--log', 
-                       default='INFO',
-                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                       help='Set the logging level')
-    args = parser.parse_args()
-    
-    # Set up logging
-    logging.basicConfig(
-        level=getattr(logging, args.log),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
-    logger = logging.getLogger(__name__)
-    return logger 
-
-
-
-logger = setup_logging()
 
 def find_data_pc_joint(pc, onsdata, input_gpk, overlap=False):
     """

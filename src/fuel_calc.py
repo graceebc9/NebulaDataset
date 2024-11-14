@@ -1,12 +1,13 @@
 import pandas as pd
 import sys 
 import numpy as np
-import logging
 from .pre_process_buildings import pre_process_building_data 
 from .postcode_utils import check_duplicate_primary_key, find_data_pc_joint
 
-# Get logger instance
-logger = logging.getLogger(__name__)
+from .logging_config import get_logger
+logger = get_logger(__name__)
+
+
 
 COLS = ['premise_area', 'heated_vol_fc', 'heated_vol_h', 'base_floor', 
         'basement_heated_vol_max', 'listed_bool', 'uprn_count']

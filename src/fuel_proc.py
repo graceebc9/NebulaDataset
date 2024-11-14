@@ -7,8 +7,9 @@ from src.fuel_calc import process_postcode_fuel
 import threading
 import geopandas as gpd
 
-# Get logger
-logger = logging.getLogger(__name__)
+from .logging_config import get_logger
+logger = get_logger(__name__)
+
 
 def load_fuel_data(gas_path, elec_path):
     """Load gas and electricity data from CSV files."""
