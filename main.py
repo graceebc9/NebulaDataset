@@ -31,59 +31,45 @@ BUILDING_PATH = '/Volumes/T9/2024_Data_downloads/Versik_building_data/2024_03_22
 GAS_PATH = '/Volumes/T9/2024_Data_downloads/UKGOV_Gas_elec/Postcode_level_gas_2022.csv'
 ELEC_PATH = '/Volumes/T9/2024_Data_downloads/UKGOV_Gas_elec/Postcode_level_all_meters_electricity_2022.csv'
 OUTPUT_DIR = 'Dataset'
+# OUTPUT_DIR = 'tests'
 
-#########################################   Regions to run, CAN UPDATE   ###################################################################### 
+#########################################   Regions to run, YOU CAN UPDATE   ###################################################################### 
 
 # Run generation locally (True) or on HPC (False)
 running_locally = True 
 
 # Regions to run
 if running_locally:
-    region_list = ['EM', 'NW']
+    region_list = [ 'NW']
 else:
-    regions_list = os.getenv('region_list')
+    regions_list = os.getenv('REGION_LIST')
 
-#########################################  Stages to run   ################################################################################### 
+#########################################  Stages to run YOU CAN UPDATE TO RUN SUBSET OF PIPELINE   #################################################
 
-STAGE1_split_onsud = True 
+STAGE1_split_onsud = False 
 STAGE2_run_fuel_calc= True
 STAGE3_post_process_data = True 
 
 #########################################  Set variables, no need to update   ################################################################# 
 
 batch_size = 10000
-log_size = 100
+log_size = 1000
 UPRN_TO_GAS_THRESHOLD = 40
 
 
 #########################################    Script      ###################################################################################### 
 
 from src.split_onsud_file import split_onsud_and_postcodes
-from src.postcode_utils import load_ids_from_file, setup_logging
+from src.postcode_utils import load_ids_from_file
 from src.pc_main import postcode_main , run_fuel_process
 from src.post_process import call_post_process 
 import os
-import logging
-import argparse
+import logging 
 
-def setup_logging():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--log', 
-                       default='INFO',
-                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                       help='Set the logging level')
-    args = parser.parse_args()
-    
-    # Set up logging
-    logging.basicConfig(
-        level=getattr(logging, args.log),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
-    logger = logging.getLogger(__name__)
-    return logger 
+from src.logging_config import get_logger, setup_logging
 
-logger = setup_logging()
+setup_logging()  
+logger = get_logger(__name__)
 
 
 def main():
@@ -109,7 +95,6 @@ def main():
     # Split ONSUD data if required
     if STAGE1_split_onsud:
         logger.info("Starting ONSUD splitting process")
-        BATCHES_OUTPUT_DIR = './dataset_generation/batch_lists'
         
         for region in region_list:
             logger.info(f"Processing region: {region}")
@@ -134,26 +119,23 @@ def main():
         
         for i, batch_path in enumerate(batch_paths, 1):
             logger.info(f"Processing batch {i}/{len(batch_paths)}: {batch_path}")
-            try:
-                label = batch_path.split('/')[-2]
-                batch_id = batch_path.split('/')[-1].split('.')[0].split('_')[-1]
-                onsud_path = os.path.join(os.path.dirname(batch_path), f'onsud_{batch_id}.csv') 
-                postcode_main(batch_path = batch_path, data_dir = OUTPUT_DIR, path_to_onsud_file = onsud_path, path_to_pcshp = PC_SHP_PATH, INPUT_GPK=BUILDING_PATH, region_label=label, 
-                        batch_label=batch_id, attr_lab='fuel', process_function=run_fuel_process, gas_path=GAS_PATH, elec_path=ELEC_PATH,
-                        overlap_outcode=overlap_outcode, overlap=overlap)
-                logger.info(f"Successfully processed batch: {batch_path}")
-            except Exception as e:
-                logger.error(f"Error processing batch {batch_path}: {str(e)}")
-                # Continue with next batch instead of failing completely
-                break
+            
+            label = batch_path.split('/')[-2]
+            batch_id = batch_path.split('/')[-1].split('.')[0].split('_')[-1]
+            onsud_path = os.path.join(os.path.dirname(batch_path), f'onsud_{batch_id}.csv') 
+            postcode_main(batch_path = batch_path, data_dir = OUTPUT_DIR, path_to_onsud_file = onsud_path, path_to_pcshp = PC_SHP_PATH, INPUT_GPK=BUILDING_PATH, region_label=label, 
+                    batch_label=batch_id, attr_lab='fuel', process_function=run_fuel_process, gas_path=GAS_PATH, elec_path=ELEC_PATH,
+                    overlap_outcode=overlap_outcode, overlap=overlap, log_size=log_size)
+            logger.info(f"Successfully processed batch: {batch_path}")
+
             
     # Unify the results from the log files
     if STAGE3_post_process_data:
         data = call_post_process(OUTPUT_DIR)
         res_df = data[data['percent_residential']==1].copy()
         res_df = res_df[res_df['diff_gas_meters_uprns_res']<= UPRN_TO_GAS_THRESHOLD ]
-        data.to_csv('v0_postcodes_dataset.csv')
-        res_df.to_csv("v1_postcodes_dataset.csv")
+        data.to_csv('All_domestic.csv')
+        res_df.to_csv("NEBULA_main_filtered.csv")
 
     logger.info("Data processing pipeline completed")
 
