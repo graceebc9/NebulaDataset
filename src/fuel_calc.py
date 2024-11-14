@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 COLS = ['premise_area', 'heated_vol_fc', 'heated_vol_h', 'base_floor', 
         'basement_heated_vol_max', 'listed_bool', 'uprn_count']
-PREFIXES = ['all_types_', 'all_res_', 'clean_res_', 'mixed_', 'outb_res_']
+PREFIXES = ['all_res_', 'clean_res_']
 
 def calc_df_sum_attribute(df, cols, prefix=''):
     """Takes input df with only one postcode and calcs attributes based on summing the building columns."""

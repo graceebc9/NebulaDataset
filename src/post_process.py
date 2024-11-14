@@ -49,7 +49,7 @@ def load_from_log(log):
         df.drop_duplicates(inplace=True)
         
         if df.groupby('postcode').size().max() > 1:
-            print(f"Duplicate postcodes found in {file_path}")
+            logger.warning(f"Duplicate postcodes found in {file_path}")
         
         fin.append(df)
     
@@ -65,7 +65,7 @@ def load_from_log(log):
 #     df['sum_buildings'] = df[building_types].fillna(0).sum(axis=1)
 
 #     if not (df['sum_buildings'] == df['len_res']).all():
-#         print(df[df['sum_buildings'] != df['len_res']][['sum_buildings', 'len_res']])
+#         logger.info(df[df['sum_buildings'] != df['len_res']][['sum_buildings', 'len_res']])
 #         raise ValueError("Sum of building types does not match 'len_res' for some rows")
 
 #     for column in building_types:
@@ -81,10 +81,10 @@ def load_from_log(log):
 #     for col in percentage_cols:
 #         if not df[col].between(0, 100).all():
 #             problematic_entries = df[~df[col].between(0, 100)]
-#             print(f"Problematic entries in column {col}:\n{problematic_entries}")
+#             logger.warning(f"Problematic entries in column {col}:\n{problematic_entries}")
 #             raise ValueError(f"Values in column {col} are outside the range 0 to 100")
 
-#     print("All percentages are within the acceptable range.")
+#     logger.debug("All percentages are within the acceptable range.")
 
 # def call_type_checks(df):
 #     df = validate_and_calculate_percentages_type(df)
@@ -96,12 +96,12 @@ def load_from_log(log):
 
 # def validate_and_calculate_percentages_age(df):
 #     age_types = df.columns.difference(['postcode', 'len_res', 'region'])
-#     print(age_types)
+#     logger.debug(f'Age types: ' {age_types})
 #     df['len_res'] = df['len_res'].fillna(0)
 #     df['sum_buildings'] = df[age_types].fillna(0).sum(axis=1)
 
 #     if not (df['sum_buildings'] == df['len_res']).all():
-#         print(df[df['sum_buildings'] != df['len_res']][['sum_buildings', 'len_res']])
+#         logger.warning(df[df['sum_buildings'] != df['len_res']][['sum_buildings', 'len_res']])
 #         raise ValueError("Sum of building ages does not match 'len_res' for some rows")
 
 #     for column in age_types:
@@ -117,7 +117,7 @@ def load_from_log(log):
 #     for col in percentage_cols:
 #         if not df[col].between(0, 100).all():
 #             problematic_entries = df[~df[col].between(0, 100)]
-#             print(f"Problematic entries in column {col}:\n{problematic_entries}")
+#             logger.warning(f"Problematic entries in column {col}:\n{problematic_entries}")
 #             raise ValueError(f"Values in column {col} are outside the range 0 to 100")
 
 
@@ -162,7 +162,7 @@ def post_proc_new_fuel(df):
                  df['mixed_total_buildings'].fillna(0) + df['unknown_alltypes'].fillna(0))
 
     if not df[df['tot'] != df['all_types_total_buildings'].fillna(0)][['tot', 'all_types_total_buildings']].empty:
-        print('Error - count of buildings not adding up')
+        logger.warning('Error - count of buildings not adding up')
         raise Exception('Error - count of buildings not adding up')
         
     df['percent_residential'] = df['all_res_total_buildings'] / df['all_types_total_buildings']
@@ -183,8 +183,6 @@ def post_proc_new_fuel(df):
     df['gas_EUI'] = df['total_gas'] / df['clean_res_heated_vol_h_total']
     df['elec_EUI'] = df['total_elec'] / df['clean_res_heated_vol_h_total']
 
-    # clean = df[df['diff_gas_meters_uprns_res'] <= 40].copy()
-    # clean_data = clean[clean['percent_residential'] == 1].copy()
     
     return df
 
@@ -195,7 +193,6 @@ def deal_unknown_res(data):
     """
     og_len = len(data)
     logger.info(f'Length of data before removing unknownd: {og_len}')
-    print(data.columns.tolist())
     data['unkn_res'] = data['all_res_total_buildings'] - data['clean_res_total_buildings'] - data['outb_res_total_buildings']
     data['perc_unk_res'] = data['unkn_res'] / data['all_res_total_buildings'] * 100 
     data['perc_unk_res'] = data['perc_unk_res'].fillna(0)
