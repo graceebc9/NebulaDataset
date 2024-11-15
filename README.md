@@ -1,3 +1,5 @@
+![NEBULA Pipeline](./images/github-header.svg)
+
 # NEBULA Dataset Generation
 
 This repository contains scripts for generating the NEBULA dataset, a postcode-level dataset for neighbourhood energy modelling. 
@@ -73,6 +75,8 @@ final_dataset/             # Output files
    ```
 
 ## Output Dataset
+
+![NEBULA Pipeline](./images/pipeline_diagram.svg)
 
 The pipeline generates postcode-level statistics including:
 - Building age and type distributions
