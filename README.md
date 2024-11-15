@@ -4,6 +4,7 @@ This repository contains scripts for generating the NEBULA dataset, a postcode-l
 
 ## Prerequisites
 
+# Install requirements
 ```
 # Create new environment
 conda create -n nebula python=3.10
@@ -13,10 +14,8 @@ conda activate nebula
 
 # Install requirements
 pip install -r requirements.txt
+conda install libtiff==4.4.0
 ```
-
-# Install requirements
-pip install -r requirements.txt
 
 ### Required Data
 #### User provided (not open licence)
@@ -42,6 +41,8 @@ input_data_sources/
     ├── Building stock data 
     ├── OA to LSOA mapping
     ├── 
+batches/  # Stores batch lists used in processing pipeline, more info in src/split_onsud_file
+    ...
 src/
     ├── global_avs/
         ├── Global average tables
