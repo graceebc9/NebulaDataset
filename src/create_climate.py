@@ -201,10 +201,28 @@ def run_all_pc_shps(output_path: Path, pc_base_path: Path, temp_file: Path):
         res = calc_HDD_CDD_pc(pc_df, xds)
         save_pc_file(res, output_file)
 
+
+def unify_temp():
+    if os.path.exists('intermediate_data/unified_temp_data.csv'):
+        logger.info('Unified temperature data already exists, skipping concatenation')        
+    else:
+        list_files=[]
+        fold = 'intermediate_data/temp_data/*.csv'
+        for f in glob.glob(fold):
+            d = pd.read_csv(f)
+            list_files.append(d)
+        temp = pd.concat(list_files)
+        temp.to_csv('intermediate_data/unified_temp_data.csv', index=False)
+        logger.info('Temperature calculation complete, output saved to intermediate_data/unified_temp_data.csv')
+
+
+
 def main( pc_base_path, temp_1km_path ):
     """Entry point to run HDD/CDD calculations for all postcodes."""
     output_path='intermediate_data/temp_data'
     logger.info('Starting temperature calculation for all postcodes')
     run_all_pc_shps(output_path, pc_base_path, temp_1km_path)
-    logger.info('Temp calc complete')
+    logger.info('Temp calc intermediate complete, starting concatenation.')
+    unify_temp()
 
+    

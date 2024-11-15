@@ -7,7 +7,6 @@ from .logging_config import get_logger
 logger = get_logger(__name__)
 
 
-os.makedirs(f'{data_dir}/census_attrs', exist_ok=True)
 census_loc = '/Volumes/T9/2024_Data_downloads/2024_11_nebula_paper_data/2021_UK_census'
 
 def create_simple_census_perc(df, code_col, val_col, attr):
@@ -26,7 +25,7 @@ def create_simple_census_perc(df, code_col, val_col, attr):
         raise ValueError('The conversion to percentages has failed.' ) 
 
     perc_df[[f'{attr}_perc_{v}' for v in mapping_dict.values() ]].reset_index().to_csv(f'intermediate_data/census_attrs/{attr}.csv', index = False)
-    logger.info(f'{attr} saved, length ', len(perc_df))
+    logger.info(f'{attr} saved, length {len(perc_df)}' )
     
 
 def create_complex_census_attr(df, code_col, val_col, code_col2, val_col2, attr):
@@ -48,7 +47,7 @@ def create_complex_census_attr(df, code_col, val_col, code_col2, val_col2, attr)
         raise ValueError('The conversion to percentages has failed.' ) 
 
     perc_df[[f'{attr}_perc_{v}_{v2}' for v in mapping_dict.values() for v2 in mapping_dict2.values() ]].reset_index().to_csv(f'intermediate_data/census_attrs/{attr}.csv', index = False)
-    logger.info(f'{attr} saved, length ', len(perc_df))
+    logger.info(f'{attr} saved, length {len(perc_df)}')
 
 
 
@@ -78,10 +77,6 @@ def main():
     df= pd.read_csv(os.path.join(census_loc, 'sex_by_age/RM121-2021-1-filtered-2024-03-05T10_10_26Z.csv') )
     create_simple_census_perc(df, 'Sex (2 categories) Code', 'Sex (2 categories)', 'sex')
 
-
-    df = pd.read_csv(os.path.join(census_loc, 'household_bedroom_number/RM059-2021-3-filtered-2024-03-04T15_28_43Z.csv') )
-    create_complex_census_attr(df, 'Household composition (6 categories) Code', 'Household composition (6 categories)', 'Number of Bedrooms (5 categories) Code', 'Number of Bedrooms (5 categories)',  'household_comp_by_bedroom' )
-
     df = pd.read_csv(os.path.join(census_loc, 'occupancy_rating/TS052-2021-5-filtered-2024-04-18T10_01_16Z.csv'))
     create_simple_census_perc(df, 'Occupancy rating for bedrooms (6 categories) Code', 'Occupancy rating for bedrooms (6 categories)', 'occupancy_rating')
 
@@ -99,5 +94,8 @@ def main():
     logger.info('Finished generating census attributes')    
 
 
-if __name__ == '__main__':
-    main()
+
+
+
+
+
