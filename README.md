@@ -5,7 +5,7 @@
 This repository contains scripts for generating the NEBULA dataset, a postcode-level dataset for neighbourhood energy modelling. 
 
 
-![NEBULA Pipeline](./images/nebula-pipeline.svg)
+![NEBULA Pipeline](./images/nebula_pipeline.svg)
 
 
 ## Prerequisites
