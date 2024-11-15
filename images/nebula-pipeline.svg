@@ -1,0 +1,50 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="400" y="40" text-anchor="middle" font-size="24" font-weight="bold" fill="#2c3e50">NEBULA Dataset Generation Pipeline</text>
+
+  <!-- Stage 0: ONSUD Processing -->
+  <rect x="50" y="80" width="200" height="80" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+  <text x="150" y="110" text-anchor="middle" font-size="14" font-weight="bold" fill="#1976d2">Stage 0: ONSUD Processing</text>
+  <text x="150" y="130" text-anchor="middle" font-size="12" fill="#2c3e50">Split ONSUD files into</text>
+  <text x="150" y="145" text-anchor="middle" font-size="12" fill="#2c3e50">10k postcode batches</text>
+
+  <!-- Stage 1: Parallel Processing -->
+  <rect x="50" y="200" width="700" height="200" fill="#e8f5e9" stroke="#388e3c" stroke-width="2" rx="5"/>
+  <text x="400" y="230" text-anchor="middle" font-size="14" font-weight="bold" fill="#388e3c">Stage 1: Data Generation</text>
+  
+  <!-- Stage 1 Components -->
+  <rect x="70" y="250" width="120" height="60" fill="white" stroke="#388e3c"/>
+  <text x="130" y="285" text-anchor="middle" font-size="12" fill="#2c3e50">Census Data</text>
+  
+  <rect x="200" y="250" width="120" height="60" fill="white" stroke="#388e3c"/>
+  <text x="260" y="285" text-anchor="middle" font-size="12" fill="#2c3e50">Climate Data</text>
+  
+  <rect x="330" y="250" width="120" height="60" fill="white" stroke="#388e3c"/>
+  <text x="390" y="285" text-anchor="middle" font-size="12" fill="#2c3e50">Buildings &amp; Energy</text>
+  
+  <rect x="460" y="250" width="120" height="60" fill="white" stroke="#388e3c"/>
+  <text x="520" y="285" text-anchor="middle" font-size="12" fill="#2c3e50">Building Age</text>
+  
+  <rect x="590" y="250" width="120" height="60" fill="white" stroke="#388e3c"/>
+  <text x="650" y="285" text-anchor="middle" font-size="12" fill="#2c3e50">Building Typology</text>
+
+  <!-- Stage 3: Post Processing -->
+  <rect x="50" y="440" width="700" height="100" fill="#fff3e0" stroke="#f57c00" stroke-width="2" rx="5"/>
+  <text x="400" y="470" text-anchor="middle" font-size="14" font-weight="bold" fill="#f57c00">Stage 3: Post Processing</text>
+  <text x="400" y="495" text-anchor="middle" font-size="12" fill="#2c3e50">Unify Results and Apply Filters</text>
+  <text x="400" y="515" text-anchor="middle" font-size="12" fill="#2c3e50">Generate Final Filtered and Unfiltered Datasets</text>
+
+  <!-- Arrows -->
+  <path d="M 150 160 L 150 200" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 400 400 L 400 440" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+    </marker>
+  </defs>
+</svg>
