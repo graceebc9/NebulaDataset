@@ -6,7 +6,7 @@ from .logging_config import get_logger
 
 logger = get_logger(__name__)
 
-data_dir = 'input_data_sources'
+
 os.makedirs(f'{data_dir}/census_attrs', exist_ok=True)
 census_loc = '/Volumes/T9/2024_Data_downloads/2024_11_nebula_paper_data/2021_UK_census'
 
@@ -25,7 +25,7 @@ def create_simple_census_perc(df, code_col, val_col, attr):
     if len (perc_df[~is_sum_equal_to_1]) != 0:
         raise ValueError('The conversion to percentages has failed.' ) 
 
-    perc_df[[f'{attr}_perc_{v}' for v in mapping_dict.values() ]].reset_index().to_csv(f'{data_dir}/census_attrs/{attr}.csv', index = False)
+    perc_df[[f'{attr}_perc_{v}' for v in mapping_dict.values() ]].reset_index().to_csv(f'intermediate_data/census_attrs/{attr}.csv', index = False)
     logger.info(f'{attr} saved, length ', len(perc_df))
     
 
@@ -47,7 +47,7 @@ def create_complex_census_attr(df, code_col, val_col, code_col2, val_col2, attr)
     if len (perc_df[~is_sum_equal_to_1]) != 0:
         raise ValueError('The conversion to percentages has failed.' ) 
 
-    perc_df[[f'{attr}_perc_{v}_{v2}' for v in mapping_dict.values() for v2 in mapping_dict2.values() ]].reset_index().to_csv(f'{data_dir}/census_attrs/{attr}.csv', index = False)
+    perc_df[[f'{attr}_perc_{v}_{v2}' for v in mapping_dict.values() for v2 in mapping_dict2.values() ]].reset_index().to_csv(f'intermediate_data/census_attrs/{attr}.csv', index = False)
     logger.info(f'{attr} saved, length ', len(perc_df))
 
 

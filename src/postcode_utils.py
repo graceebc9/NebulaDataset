@@ -15,6 +15,7 @@ def find_data_pc_joint(pc, onsdata, input_gpk, overlap=False):
     Find buildings based on UPRN match to the postcodes and Spatial join 
     input: joint data product from onsud loadaer (pcshp and onsud data) 
     """
+    logger.debug(f"Finding data for postcode: {pc}")
     data, pcshp = onsdata 
     pcshp = pcshp[pcshp['POSTCODE']==pc]
 
@@ -60,7 +61,7 @@ def load_onsud_data(path_to_onsud_file: str, path_to_pcshp: str) -> Optional[Tup
         return None
     
     region_label = path_to_onsud_file.split('/')[-1].split('.')[0].split('_')[-1]
-    logger.info(f'Loading ONSUD file for batch: {region_label}')
+    logger.debug(f'Loading ONSUD file for batch: {region_label}')
     
     onsud_df = pd.read_csv(path_to_onsud_file, low_memory=False)
     return find_postcode_for_ONSUD_file(onsud_df, path_to_pcshp)
@@ -79,6 +80,7 @@ def find_postcode_for_ONSUD_file(onsud_file: pd.DataFrame,
             - Merged DataFrame with ONSUD and geographic data
             - Postcode shapefile DataFrame
     """
+    logger.debug('Finding postocdes for ONSUD file')
     # Extract leading letters from postcodes and clean data
     onsud_file['leading_letter'] = onsud_file['PCDS'].str.extract(r'^([A-Za-z]{1,2})\d')
     onsud_file = onsud_file[~onsud_file['PCDS'].isna()]
@@ -123,6 +125,7 @@ def check_merge_files(df1, df2, col1, col2):
     Validate files and columns before merging.
     """
     # Check if the files are empty
+    logger.debug('Checking files before merging')
     if df1.empty or df2.empty:
         logger.error("One or both files are empty")
         if df1.empty:

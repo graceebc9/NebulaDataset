@@ -48,7 +48,7 @@ def postcode_main(batch_path, data_dir, path_to_onsud_file, path_to_pcshp, INPUT
     """Main processing function."""
     
     # Setup logging
-    proc_dir = os.path.join(data_dir, 'proc_dir', attr_lab, region_label)
+    proc_dir = os.path.join(data_dir, attr_lab, region_label)
     os.makedirs(proc_dir, exist_ok=True)
     logger = logging.getLogger(__name__)
     
@@ -106,8 +106,7 @@ def postcode_main(batch_path, data_dir, path_to_onsud_file, path_to_pcshp, INPUT
 def run_fuel_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_label, 
                     log_file, gas_path, elec_path, overlap, batch_dir, path_to_pcshp):
     """Process fuel data."""
-    logger = logging.getLogger('fuel_processor')
-    
+
     gas_df, elec_df = load_fuel_data(gas_path, elec_path)
     
     run_fuel_calc_main(
@@ -116,22 +115,19 @@ def run_fuel_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_labe
         log_file=log_file, gas_df=gas_df, elec_df=elec_df
     )
 
-def run_age_process(batch_ids, onsud_data, INPUT_GPK, batch_size, batch_label,
+def run_age_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_label,
                    log_file, gas_path=None, elec_path=None, overlap=None,
                    batch_dir=None, path_to_pcshp=None):
     """Process age data."""
-    logger = logging.getLogger('age_processor')
-    logger.info('Starting age calculation process')
-    
-    run_age_calc(batch_ids, onsud_data, INPUT_GPK, batch_size,
+
+    run_age_calc(batch_ids, onsud_data, INPUT_GPK, subbatch_size,
                  batch_label, log_file, overlap)
 
-def run_type_process(batch_ids, onsud_data, INPUT_GPK, batch_size, batch_label,
+def run_type_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_label,
                     log_file, gas_path=None, elec_path=None, overlap=None,
                     batch_dir=None, path_to_pcshp=None):
     """Process type data."""
-    logger = logging.getLogger('type_processor')
-    logger.info('Starting type calculation process')
+
     
-    run_type_calc(batch_ids, onsud_data, INPUT_GPK, batch_size,
+    run_type_calc(batch_ids, onsud_data, INPUT_GPK, subbatch_size,
                   batch_label, log_file)

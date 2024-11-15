@@ -109,7 +109,7 @@ def update_outbuildings(test):
 
 
 def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
-    df['min_side'] = df['geometry'].apply(min_side)
+    df['min_side'] = df['geometry'].astype(object).apply(min_side)
     df['threex_minside'] = [x * 3 for x in df['min_side']]
     df['validated_height'] = np.where(df['height_numeric'] >= df['threex_minside'],   np.nan,  df['height_numeric'])
     df['validated_fc'] = np.where(((df['av_fl_height']>= MAX_THRESHOLD_FLOOR_HEIGHT )| (df['av_fl_height'] <= MIN_THRESH_FL_HEIGHT )) & (df['height']< df['threex_minside']) , np.nan, df['floor_count_numeric'])
@@ -196,14 +196,14 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
     
     
     df = create_age_buckets(df)
+    
     df['height_numeric'] = pd.to_numeric(df['height'], errors='coerce')
     df['floor_count_numeric'] = pd.to_numeric(df['premise_floor_count'], errors='coerce')
     df['av_fl_height'] = df['height_numeric'] / df['floor_count_numeric']
+    
     df=update_listed_type(df)
     df=update_outbuildings(df)
     df=update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESH_FL_HEIGHT)
-    # check before doing local average filles 
-    
     df=fill_local_averages(df)
     df=fill_glob_avs(df, fc)
     df = create_heated_vol(df)

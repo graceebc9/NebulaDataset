@@ -7,10 +7,11 @@ import pandas as pd
 import sys 
 import numpy as np  
 
+from .logging_config import get_logger
+logger = get_logger(__name__)
 
 
-
-def calc_filtered_percentage_of_premise_type(df, prem_types):
+def calc_counts_of_premise_type(df, prem_types):
     """
     Function to create percentage of different building types, filtered by specified types,
     and return it in a dictionary.
@@ -35,9 +36,6 @@ def calc_res_clean_counts(df):
     return len(res)
 
 
-
-
-    
 def process_postcode_buildtype(pc, onsud_data,  INPUT_GPK, overlap = False, batch_dir=None, path_to_pcshp=None  ):
     """Process one postcode, deriving building attributes and electricity and fuel info.
     
@@ -81,17 +79,17 @@ def process_postcode_buildtype(pc, onsud_data,  INPUT_GPK, overlap = False, batc
     dc_full['len_res'] = np.nan 
     dc_full['None_type'] = np.nan
 
-    if  uprn_match is None:
-        print('Empty uprn match')
+    if uprn_match.empty or   uprn_match is None:
+        logger.debug('Empty uprn match')
         
     else:
         df  = pre_process_building_data(uprn_match)    
         if len(df)!=len(uprn_match):
             raise Exception('Error in pre process - some cols dropped? ')
-        dc = calc_filtered_percentage_of_premise_type(df, prem_types)
+        dc = calc_counts_of_premise_type(df, prem_types)
         if df is not None:
             if check_duplicate_primary_key(df, 'upn'):
-                print('Duplicate primary key found for upn')
+                logger.warning('Duplicate primary key found for upn')
                 sys.exit()
     
 

@@ -5,6 +5,9 @@ import pandas as pd
 import sys 
 import numpy as np  
 
+from src.logging_config import get_logger
+logger = get_logger(__name__)
+
 def calc_filtered_percentage_of_building_age(df, age_types):
     """
     Function to create percentage of different building ages, filtered by specified types,
@@ -62,8 +65,8 @@ def process_postcode_building_age(pc, onsud_data, INPUT_GPK, overlap=False, batc
     dc_full['len_res'] = np.nan 
     dc_full['None_age'] = np.nan
 
-    if uprn_match is None:
-        print('Empty uprn match')
+    if uprn_match.empty or uprn_match is None:
+        logger.debug('Empty uprn match')
     else:
         df = pre_process_building_data(uprn_match)
         if len(df) != len(uprn_match):
@@ -71,7 +74,7 @@ def process_postcode_building_age(pc, onsud_data, INPUT_GPK, overlap=False, batc
         dc = calc_filtered_percentage_of_building_age(df, age_types)
         if df is not None:
             if check_duplicate_primary_key(df, 'upn'):
-                print('Duplicate primary key found for upn')
+                logger.debug('Duplicate primary key found for upn')
                 sys.exit()
 
         dc_res = {'len_res': calc_res_clean_counts(uprn_match)}

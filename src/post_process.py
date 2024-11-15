@@ -203,6 +203,58 @@ def deal_unknown_res(data):
     return  data[data['perc_unk_res']< PERC_UNKNOWN_RES_ALLOWED ]
 
 
+def apply_filters(data, UPRN_THRESHOLD=40):
+    """
+    Apply multiple filters to a DataFrame containing residential energy usage data.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Input DataFrame containing residential and energy usage data
+    UPRN_THRESHOLD : int, default=40
+        Maximum allowed difference between gas meters and residential UPRNs
+    gas_eui_threshold : float, default=500
+        Maximum allowed gas energy usage intensity
+    elec_eui_threshold : float, default=150
+        Maximum allowed electricity energy usage intensity
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Filtered DataFrame meeting all specified conditions
+    """
+    # Define all filter conditions in a dictionary for clarity and maintainability
+    filters = {
+        'residential_filter': lambda x: x['percent_residential'] == 1,
+        'gas_meters_filter': lambda x: x['diff_gas_meters_uprns_res'] <= UPRN_THRESHOLD,
+        'gas_usage_range': lambda x: (x['h_av_gas'] <= 500) & (x['h_av_gas'] > 5),
+        'electricity_usage': lambda x: x['h_av_elec'] <= 150,
+        'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
+        'heated_volume_range': lambda x: (x['all_res_heated_vol_h_total'].between(50, 200000))
+    }
+    
+    # Apply all filters at once using numpy's logical AND
+    mask = pd.Series(True, index=data.index)
+    for filter_name, filter_func in filters.items():
+        mask &= filter_func(data)
+    
+    # Create filtered DataFrame
+    filtered_df = data.loc[mask].copy()
+    
+    # Log filtering results if logger is available
+    try:
+        logger = get_logger(__name__)
+        logger.info(f"Original rows: {len(data)}, Filtered rows: {len(filtered_df)}")
+        for filter_name, filter_func in filters.items():
+            rows_removed = len(data) - len(data[filter_func(data)])
+            logger.debug(f"{filter_name}: removed {rows_removed} rows")
+    except NameError:
+        pass
+    
+    return filtered_df
+
+
+
 def call_post_process(OUTPUT_DIR):
     
     op = os.path.join(OUTPUT_DIR, 'proc_dir/fuel')
@@ -216,3 +268,57 @@ def call_post_process(OUTPUT_DIR):
     test_data(data)
     
     return data 
+
+
+
+######################### Filter to get final NEBULA sample ######################### 
+ 
+def apply_filters(data, UPRN_THRESHOLD=40):
+    """
+    Apply multiple filters to a DataFrame containing residential energy usage data.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Input DataFrame containing residential and energy usage data
+    UPRN_THRESHOLD : int, default=40
+        Maximum allowed difference between gas meters and residential UPRNs
+    gas_eui_threshold : float, default=500
+        Maximum allowed gas energy usage intensity
+    elec_eui_threshold : float, default=150
+        Maximum allowed electricity energy usage intensity
+        
+    Returns:
+    --------
+    pandas.DataFrame
+        Filtered DataFrame meeting all specified conditions
+    """
+    # Define all filter conditions in a dictionary for clarity and maintainability
+    filters = {
+        'residential_filter': lambda x: x['percent_residential'] == 1,
+        'gas_meters_filter': lambda x: x['diff_gas_meters_uprns_res'] <= UPRN_THRESHOLD,
+        'gas_usage_range': lambda x: (x['h_av_gas'] <= 500) & (x['h_av_gas'] > 5),
+        'electricity_usage': lambda x: x['h_av_elec'] <= 150,
+        'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
+        'heated_volume_range': lambda x: (x['all_res_heated_vol_h_total'].between(50, 200000))
+    }
+    
+    # Apply all filters at once using numpy's logical AND
+    mask = pd.Series(True, index=data.index)
+    for filter_name, filter_func in filters.items():
+        mask &= filter_func(data)
+    
+    # Create filtered DataFrame
+    filtered_df = data.loc[mask].copy()
+    
+    # Log filtering results if logger is available
+    try:
+        logger = get_logger(__name__)
+        logger.info(f"Original rows: {len(data)}, Filtered rows: {len(filtered_df)}")
+        for filter_name, filter_func in filters.items():
+            rows_removed = len(data) - len(data[filter_func(data)])
+            logger.debug(f"{filter_name}: removed {rows_removed} rows")
+    except NameError:
+        pass
+    
+    return filtered_df

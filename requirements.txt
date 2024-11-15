@@ -1,8 +1,29 @@
+# # Python >= 3.8 required
+
+# geopandas>=0.11.0
+# numpy>=1.23.1
+# pandas>=1.4.3
+# scipy>=1.8.1
+# Shapely>=1.8.2
+# fiona>=1.8.0 
+
+
+# netCDF4>=1.7.2
+# xarray>=2022.3.0
+
+
 # Python >= 3.8 required
 
-geopandas>=0.11.0
+# Core geospatial
+geopandas>=0.11.0,<0.13.0
+Shapely>=1.8.2,<2.0.0
+fiona>=1.8.0,<2.0.0
+
+# Data processing
 numpy>=1.23.1
 pandas>=1.4.3
 scipy>=1.8.1
-Shapely>=1.8.2
-fiona>=1.8.0 
+
+# Array processing & NetCDF
+xarray>=2022.3.0
+netCDF4>=1.7.2
