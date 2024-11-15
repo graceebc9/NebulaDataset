@@ -76,7 +76,7 @@ final_dataset/             # Output files
 
 ## Output Dataset
 
-![NEBULA Pipeline](./images/pipeline_diagram.svg)
+![NEBULA Pipeline](./images/nebula-pipeline.svg)
 
 The pipeline generates postcode-level statistics including:
 - Building age and type distributions
