@@ -2,16 +2,18 @@
 Temperature data processing library for calculating Heating and Cooling Degree Days (HDD/CDD).
 
 Processes NetCDF temperature data and UK postcode shapefiles to calculate HDD/CDD values 
-for use in energy modeling. Handles both annual and seasonal (summer/winter) calculations
-with validation. Samples using nearest neighbor interpolation and checks for consistency
+for use in energy modeling. 
+- Handles both annual and seasonal (summer/winter) calculations with validation. S
+- Interpolate using nearest along x and y, with max gap of 5 
+- Samples temperature data at postcode centroids using nearest neighbor interpolation.
 
-Processes postcodes in their sub folders from the edina postcode shapefiles
+Processes postcodes in their sub folders (e.g. file 'P' for postcodes begining with P) from the edina postcode shapefiles
 
-Temp data from HAD-Uk, downloaded from CEDA Archive, HADUK data is British National grid coords, which is CRS EPSG:27700
+Temperature data from HAD-Uk, downloaded from CEDA Archive, HADUK data is British National grid coords, which is CRS EPSG:27700
     - https://epsg.io/27700
     - https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets
 
-Base temperatures:
+Base temperatures for calculating HDD/CDD:
    Heating: 15.5°C
    Cooling: 18.0°C
 
@@ -42,12 +44,14 @@ def validate_temperature(temp):
 
 
 def load_nc_file(path):
-    """Load and preprocess NetCDF file into xarray Dataset, interpolating along x spatial dimensions."""
+    """Load and preprocess NetCDF file into xarray Dataset, interpolating along x and y spatial dimensions using nearest, with max gap of 5 """
     nc_dataset = nc.Dataset(path)
     xds = xr.open_dataset(xr.backends.NetCDF4DataStore(nc_dataset))
     # xds = xr.open_dataset(xr.backends.NetCDF4DataStore(nc_dataset), decode_times=False)
     xds.rio.set_spatial_dims(x_dim='projection_x_coordinate', y_dim='projection_y_coordinate', inplace=True)
-    xds = xds.interpolate_na(dim='projection_x_coordinate')
+    xds.interpolate_na(dim='projection_y_coordinate', method='nearest', max_gap=5)
+    xds.interpolate_na(dim='projection_x_coordinate', method='nearest', max_gap=5)
+    
     return xds 
 
 
@@ -106,17 +110,14 @@ def calc_HDD_CDD_pc(pc, xds, tolerance=0.001):
     Returns:
     - result: DataFrame with annual, summer, and winter HDD and CDD.
     """
-
-    # Check CRS consistency
-
+    pc_copy = pc.copy()
+    xds_copy = xds.copy()
+    xds_copy.rio.set_crs('EPSG:27700', inplace=True)
+    if pc_copy.crs != xds_copy.rio.crs:
+        raise ValueError(f"CRS mismatch: {pc.crs} vs {xds.rio.crs}")
     # xds.rio.write_crs(pc.crs, inplace=True) 
-    
 
-    if pc.crs != xds.rio.crs:
-        logger.info(f"CRS mismatch between GeoDataFrame and xarray Dataset: {pc.crs} vs {xds.rio.crs}")
-        raise ValueError("CRS mismatch between GeoDataFrame and xarray Dataset")
-    
-    sampled_values = sample(pc, xds)  
+    sampled_values = sample(pc_copy, xds_copy)  
 
     # Convert sampled DataArray to DataFrame
     sampled_df = sampled_values.to_dataframe().reset_index() 
@@ -180,8 +181,6 @@ def run_all_pc_shps(output_path: Path, pc_base_path: Path, temp_file: Path):
         'projection_y_coordinate': 'y',
         'projection_x_coordinate': 'x'
     })
-
-
     xds.rio.set_crs('EPSG:27700', inplace=True)
     logger.info('Temperature data loaded successfully')
     #  check xds is loaded correctly
