@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 # ============================================================
 # Constants
 # ============================================================
-BUILD_PERC_VAL = 0.85
+
 BASEMENT_HEIGHT = 2.4
 BASEMENT_PERCENTAGE_OF_PREMISE_AREA = 1
 DEFAULT_FLOOR_HEIGHT = 2.3
@@ -103,7 +103,6 @@ def min_side(polygon):
 
 def update_outbuildings(test):
     test.loc[(test['height']==3) & (test['premise_floor_count'] == '2') & (test['uprn_count'] == 0), 'premise_type'] = 'Domestic outbuilding'
-    # test = create_height_bucket_col(test)
     return test
 
 
@@ -117,25 +116,25 @@ def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESHOLD
 
 
 
-def fill_local_averages(df):
-    logger.debug('starting to fill local averages')
-    num_builds = len(df )
+# def fill_local_averages(df):
+#     logger.debug('starting to fill local averages')
+#     num_builds = len(df )
 
-    num_fc_invalid = df.validated_fc.isna().sum() 
-    num_h_invalid = df.validated_height.isna().sum() 
+#     num_fc_invalid = df.validated_fc.isna().sum() 
+#     num_h_invalid = df.validated_height.isna().sum() 
 
-    if num_builds - num_fc_invalid ==0 | len(df)==1 | num_builds - num_h_invalid == 0 : 
-        print('Cannot do local fill for FC')
-        # height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
-        raise Exception('no local fill ')
+#     if num_builds - num_fc_invalid ==0 | len(df)==1 | num_builds - num_h_invalid == 0 : 
+#         print('Cannot do local fill for FC')
+#         # height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
+#         raise Exception('no local fill ')
 
-    fc_fla= df[~df['validated_fc'].isna()]['validated_fc'].mean()
-    height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
-    df['fc_filled'] = np.where(df['validated_fc'].isna(), fc_fla, df['validated_fc'])
-    df['height_filled'] = np.where(df['validated_height'].isna(), height_fla, df['validated_height'] )
-    df = create_height_bucket_cols(df, 'height_filled')
-    logger.debug('Fill local averages complete')
-    return df 
+#     fc_fla= df[~df['validated_fc'].isna()]['validated_fc'].mean()
+#     height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
+    
+#     df['height_filled'] = np.where(df['validated_height'].isna(), height_fla, df['validated_height'] )
+#     df = create_height_bucket_cols(df, 'height_filled')
+#     logger.debug('Fill local averages complete')
+#     return df 
 
 def fill_glob_avs(df, fc = None  ):
     logger.debug('Starting to fill global averages')
@@ -162,8 +161,7 @@ def create_heated_vol(df):
     """
     calc heated premise are
     """
-    df['heated_vol_fc'] = df['premise_area'] * df['fc_filled']
-    df['heated_vol_h'] = df['premise_area'] * df['global_average_floorcount']
+    df['total_fl_area'] = df['premise_area'] * df['global_average_floorcount']
     
     return df 
 
@@ -204,7 +202,7 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
     df=update_listed_type(df)
     df=update_outbuildings(df)
     df=update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESH_FL_HEIGHT)
-    df=fill_local_averages(df)
+    # df=fill_local_averages(df)
     df=fill_glob_avs(df, fc)
     df = create_heated_vol(df)
     df = create_basement_metrics(df)

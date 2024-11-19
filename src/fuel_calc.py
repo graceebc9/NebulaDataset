@@ -8,7 +8,7 @@ from .logging_config import get_logger
 logger = get_logger(__name__)
 
 
-COLS = ['premise_area', 'heated_vol_h', 'base_floor', 
+COLS = ['premise_area', 'total_fl_area', 'base_floor', 
         'basement_heated_vol_max', 'listed_bool', 'uprn_count']
 
 PREFIXES = ['all_res_', 'clean_res_']

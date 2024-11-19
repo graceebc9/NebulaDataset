@@ -49,8 +49,8 @@ def load_nc_file(path):
     xds = xr.open_dataset(xr.backends.NetCDF4DataStore(nc_dataset))
     # xds = xr.open_dataset(xr.backends.NetCDF4DataStore(nc_dataset), decode_times=False)
     xds.rio.set_spatial_dims(x_dim='projection_x_coordinate', y_dim='projection_y_coordinate', inplace=True)
-    xds.interpolate_na(dim='projection_y_coordinate', method='nearest', max_gap=5)
-    xds.interpolate_na(dim='projection_x_coordinate', method='nearest', max_gap=5)
+    xds = xds.interpolate_na(dim='projection_y_coordinate', method='nearest', limit=10)
+    xds = xds.interpolate_na(dim='projection_x_coordinate', method='nearest', limit=10)
     
     return xds 
 

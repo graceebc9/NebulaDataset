@@ -265,32 +265,32 @@ def generate_derived_cols(data):
     data['elec_eui'] = data['total_elec'] / data['clean_res_heated_vol_h_total']
     return data 
 
-def unify_census(input_data_sources_location):
-    # census and urban rural, inc mapping from 2011 to 2021 OAs
-    census  = glob.glob('intermediate_data/census_attrs/*csv')
-    ll=pd.DataFrame()
-    i = 0
-    for f in census:
-        df = pd.read_csv(f)
-        if i ==0:
-            res = df.copy()  
-            i+=1    
-        else:
-            res = df.merge(res, on='Output Areas Code', how='outer')
+# def unify_census(input_data_sources_location):
+#     # census and urban rural, inc mapping from 2011 to 2021 OAs
+#     census  = glob.glob('intermediate_data/census_attrs/*csv')
+#     ll=pd.DataFrame()
+#     i = 0
+#     for f in census:
+#         df = pd.read_csv(f)
+#         if i ==0:
+#             res = df.copy()  
+#             i+=1    
+#         else:
+#             res = df.merge(res, on='Output Areas Code', how='outer')
 
-    oa_lk = pd.read_csv(os.path.join(input_data_sources_location, 'lookups/Output_Areas_(2011)_to_Output_Areas_(2021)_to_Local_Authority_District_(2022)_Lookup_in_England_and_Wales_(Version_2).csv') ) 
-    u_r =  pd.read_csv(os.path.join(input_data_sources_location,  'urbal_rural_2011/RUC11_OA11_EW.csv')) 
+#     oa_lk = pd.read_csv(os.path.join(input_data_sources_location, 'lookups/Output_Areas_(2011)_to_Output_Areas_(2021)_to_Local_Authority_District_(2022)_Lookup_in_England_and_Wales_(Version_2).csv') ) 
+#     u_r =  pd.read_csv(os.path.join(input_data_sources_location,  'urbal_rural_2011/RUC11_OA11_EW.csv')) 
 
-    cen_lk = res.merge(oa_lk, left_on = 'Output Areas Code', right_on ='OA21CD')
-    cen_ur = cen_lk.merge(u_r[['OA11CD', 'RUC11CD', 'RUC11']], on = 'OA11CD', how='inner')
-    return cen_ur 
+#     cen_lk = res.merge(oa_lk, left_on = 'Output Areas Code', right_on ='OA21CD')
+#     cen_ur = cen_lk.merge(u_r[['OA11CD', 'RUC11CD', 'RUC11']], on = 'OA11CD', how='inner')
+#     return cen_ur 
 ######################### Unify post processing steps for buildings ######################### 
 
 def merge_fuel_age_type(fuel, typed_data, age, temp  ):
-    # data = fuel.merge(typed_data, on=['postcode'])
-    # data = data.merge(age, on=['postcode'])
-    # data = data.merge(temp, left_on='postcode', right_on='POSTCODE')
-    data = fuel.merge(temp, left_on='postcode', right_on='POSTCODE')
+    data = fuel.merge(typed_data, on=['postcode'])
+    data = data.merge(age, on=['postcode'])
+    data = data.merge(temp, left_on='postcode', right_on='POSTCODE')
+    # data = fuel.merge(temp, left_on='postcode', right_on='POSTCODE')
     return data 
 
 
@@ -315,7 +315,7 @@ def load_other_data(input_data_sources_location):
     except:
         raise Exception('Error loading postcode mapping. Check lookups/PCD_OA_LSOA_MSOA_LAD_MAY22_UK_LU.csv is in correct location in input data sources')
     try:
-        census_data = unify_census(input_data_sources_location)
+        census_data = pd.read_csv('intermediate_data/unified_census_data.csv')
     except:
         raise Exception('Error loading census data. Re run stage create_census in main.py and then check all files in src.post_process.unify_census are present in input data folder ' ) 
     return temp_data, urbanisation_df, pc_mapping, census_data
@@ -379,6 +379,8 @@ def apply_filters(data, UPRN_THRESHOLD=40):
     """
 
     filters = {
+        'total_gas' : lambda x: x['total_gas'] > 0,
+        'total_elec': lambda x: x['total_elec'] > 0,
         'residential_filter': lambda x: x['percent_residential'] == 1,
         'gas_meters_filter': lambda x: x['diff_gas_meters_uprns_res'] <= UPRN_THRESHOLD,
         'gas_usage_range': lambda x: (x['gas_eui'] <= 500) & (x['gas_eui'] > 5),
