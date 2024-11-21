@@ -59,9 +59,7 @@ def process_fuel_batch_base(process_fn, pc_batch, data, gas_df, elec_df,
     for pc in pc_batch:
         try:
             pc_result = process_fn(
-                pc, data, gas_df, elec_df, INPUT_GPK,
-                overlap, batch_dir, path_to_pcshp
-            )
+                pc, data, gas_df, elec_df, INPUT_GPK,)
             if pc_result is not None:
                 results.append(pc_result)
             else:

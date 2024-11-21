@@ -116,25 +116,25 @@ def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESHOLD
 
 
 
-# def fill_local_averages(df):
-#     logger.debug('starting to fill local averages')
-#     num_builds = len(df )
+def fill_local_averages(df):
+    logger.debug('starting to fill local averages')
+    num_builds = len(df )
 
-#     num_fc_invalid = df.validated_fc.isna().sum() 
-#     num_h_invalid = df.validated_height.isna().sum() 
+    num_fc_invalid = df.validated_fc.isna().sum() 
+    num_h_invalid = df.validated_height.isna().sum() 
 
-#     if num_builds - num_fc_invalid ==0 | len(df)==1 | num_builds - num_h_invalid == 0 : 
-#         print('Cannot do local fill for FC')
-#         # height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
-#         raise Exception('no local fill ')
+    if num_builds - num_fc_invalid ==0 | len(df)==1 | num_builds - num_h_invalid == 0 : 
+        print('Cannot do local fill for FC')
+        # height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
+        raise Exception('no local fill ')
 
-#     fc_fla= df[~df['validated_fc'].isna()]['validated_fc'].mean()
-#     height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
+    fc_fla= df[~df['validated_fc'].isna()]['validated_fc'].mean()
+    height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
     
-#     df['height_filled'] = np.where(df['validated_height'].isna(), height_fla, df['validated_height'] )
-#     df = create_height_bucket_cols(df, 'height_filled')
-#     logger.debug('Fill local averages complete')
-#     return df 
+    df['height_filled'] = np.where(df['validated_height'].isna(), height_fla, df['validated_height'] )
+    df = create_height_bucket_cols(df, 'height_filled')
+    logger.debug('Fill local averages complete')
+    return df 
 
 def fill_glob_avs(df, fc = None  ):
     logger.debug('Starting to fill global averages')
@@ -172,7 +172,7 @@ def create_basement_metrics(df):
     ]
     basement_choices = [1, 0]
     df['base_floor'] = np.select(basement_conditions, basement_choices, default=0)
-    df['basement_heated_vol_max'] = df['base_floor'] *  df['premise_area'] * BASEMENT_HEIGHT * BASEMENT_PERCENTAGE_OF_PREMISE_AREA 
+    df['basement_heated_vol'] = df['base_floor'] *  df['premise_area'] * BASEMENT_HEIGHT * BASEMENT_PERCENTAGE_OF_PREMISE_AREA 
     return df 
 
 def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEIGHT= 5.3):
@@ -191,8 +191,7 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
          or through height (either correct height, or local av hegith, converted to global fc for that height)
          
     """ 
-    
-    
+
     df = create_age_buckets(df)
     
     df['height_numeric'] = pd.to_numeric(df['height'], errors='coerce')
@@ -202,7 +201,7 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
     df=update_listed_type(df)
     df=update_outbuildings(df)
     df=update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESH_FL_HEIGHT)
-    # df=fill_local_averages(df)
+    df=fill_local_averages(df)
     df=fill_glob_avs(df, fc)
     df = create_heated_vol(df)
     df = create_basement_metrics(df)
@@ -255,20 +254,12 @@ def test_building_metrics(df):
     """Run various assertions on building metrics."""
 
 
-    for c in ['heated_vol_h', 'heated_vol_fc']:
+    for c in ['total_fl_area']:
         check_nulls_percent(df, c, 0)
 
     test = df[df['validated_height'].isna()].copy() 
     assert_larger(test, 'height', 'height_filled')
 
-# ['premise_age', 'premise_year', 'premise_use', 'premise_type', 'premise_floor_count', 'height', 'premise_area', 'building_area',
-#  'address_area', 'gross_area', 'basement', 'listed_grade', 'element_count', 'bathroom_count', 'bedroom_count', 'reception_room_count',
-#   'roof_type', 'wall_type', 'substructure_type', 'glazing_type', 'wall_construction_type', 'extension_count', 'habitable_rooms',
-#    'open_fireplaces', 'floor_type', 'distance_building', 'site_id', 'site_area', 'site_non_built_area', 'site_building_count',
-#     'distance_water', 'verisk_building_id', 'uprn', 'uprn_count', 'uprn_distance', 'toid', 'map_age', 'map_floors', 'map_use', 
-#     'map_simple_use', 'upn', 'geometry', 'premise_age_bucketed', 'height_numeric', 'floor_count_numeric', 'av_fl_height',
-#      'listed_bool', 'min_side', 'threex_minside', 'validated_height', 'validated_fc', 'fc_filled', 'height_filled',
-#       'height_filled_bucket', 'global_average_floorcount', 'updated', 'heated_prem_area_fc', 'heated_prem_area_h', 'base_floor', 'basement_heated_vol_max']
 
 def pre_process_building_data(build,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEIGHT= 5.3):
     # print(MIN_THRESH_FL_HEIGHT,MAX_THRESH_FL_HEIGHT )

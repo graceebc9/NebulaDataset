@@ -166,6 +166,13 @@ def unify_census(input_data_sources_location):
     cen_ur.drop(columns=['OA21CD', 'LAD22CD', 'LAD22NM', 'LAD22NMW'] , inplace=True)
     cen_ur.rename(columns={'Output Areas Code': 'OA21CD'}, inplace=True)
     cen_ur.to_csv('intermediate_data/unified_census_data.csv', index=False)
+
+
+    # Remove dups on oa to oa 11-21 mapping and null any conflicting values 
+    census_data = census_data.drop_duplicates(subset=['OA21CD', 'RUC11CD'])
+    census_data.loc[census_data['OA21CD'].duplicated(), 'RUC11CD'] = np.nan
+    census_data.loc[census_data['OA21CD'].duplicated(), 'RUC11'] = np.nan
+    census_data = census_data.drop_duplicates(subset=['OA21CD'])
     logger.info('Saved unified census data to intermediate_data/unified_census_data.csv')
     
 

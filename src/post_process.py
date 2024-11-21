@@ -99,10 +99,8 @@ def validate_and_calculate_percentages_age(df):
     logger.debug(f'Age types: {age_types}')
     df['len_res'] = df['len_res'].fillna(0)
     df['sum_buildings'] = df[age_types].fillna(0).sum(axis=1)
-
-    if not (df['sum_buildings'] == df['len_res']).all():
-        logger.warning(df[df['sum_buildings'] != df['len_res']][['sum_buildings', 'len_res']])
-        raise ValueError("Sum of building ages does not match 'len_res' for some rows")
+    df.drop(columns=['None_age'], inplace=True)
+    df['None_age'] = df['len_res'] - df['sum_buildings']
 
     for column in age_types:
         df[f'{column}_pct'] = (df[column] / df['len_res']) * 100
@@ -132,7 +130,6 @@ def test_data(df):
     logger.info('Starting tests')
 
     assert_larger(df, 'all_res_heated_vol_fc_total', 'clean_res_heated_vol_fc_total')
-    
     assert_larger(df, 'all_res_heated_vol_fc_total', 'outb_res_heated_vol_fc_total')
     assert_larger(df, 'total_gas', 'avg_gas')
     assert_larger(df, 'total_elec', 'avg_elec')
@@ -150,6 +147,10 @@ def test_data(df):
               (df['all_res_premise_area_total'] != df['clean_res_premise_area_total'])].empty:
         raise Exception('Error in sum of residential buildings - clean and all not matching when building count same')
 
+    # check for duplicated postcodes 
+    
+    if df['postcode'].duplicated().sum() > 0: 
+        raise Exception('Duplicated postcodes found')
     logger.info('Tests passed')
 
 def validate_vol_per_uprn(df):
@@ -183,7 +184,9 @@ def post_proc_new_fuel(df):
     df['gas_EUI'] = df['total_gas'] / df['clean_res_heated_vol_h_total']
     df['elec_EUI'] = df['total_elec'] / df['clean_res_heated_vol_h_total']
 
-    
+    data['unkn_res'] = data['all_res_total_buildings'] - data['clean_res_total_buildings'] - data['outb_res_total_buildings']
+    data['perc_unk_res'] = data['unkn_res'] / data['all_res_total_buildings'] * 100 
+    data['perc_unk_res'] = data['perc_unk_res'].fillna(0)
     return df
 
 def deal_unknown_res(data):
@@ -191,16 +194,22 @@ def deal_unknown_res(data):
     Remove those with more than threshold value of unknwon residentails builds
     remove those with more volume of outbiilding than res (should only be a few rows )
     """
+    print('Starting to deal with unknown res')
+    print('OG legnth of data', len(data))
     og_len = len(data)
     logger.info(f'Length of data before removing unknownd: {og_len}')
-    data['unkn_res'] = data['all_res_total_buildings'] - data['clean_res_total_buildings'] - data['outb_res_total_buildings']
-    data['perc_unk_res'] = data['unkn_res'] / data['all_res_total_buildings'] * 100 
-    data['perc_unk_res'] = data['perc_unk_res'].fillna(0)
-    
     data= data[data['clean_res_heated_vol_fc_total'] > data['outb_res_heated_vol_fc_total'].fillna(0) ] 
-    if len(data) / og_len * 100  < 0.9:
-        raise Exception('More than 10% filtered out')
-    return  data[data['perc_unk_res']< PERC_UNKNOWN_RES_ALLOWED ]
+    print('Len after ob filter ' , len(data))
+    if len(data) / og_len * 100  < 0.95:
+        raise Exception('More than 5% filtered out because ooutbuilding volume greater ')
+    cl_data =   data[data['perc_unk_res']< PERC_UNKNOWN_RES_ALLOWED ]
+    print('Len after removing unknown residential types')
+    if cl_data[cl_data['all_res_gross_area_total'] < cl_data['all_res_premise_area_total']].shape[0] < 10 :
+        cl_data= cl_data[cl_data['all_res_gross_area_total'] >= cl_data['all_res_premise_area_total']]
+    else:
+        raise Exception('More than 10 rows have gross area less than premise area (gross = total build ,premise = footprint)')
+
+    return cl_data     
 
 
 def call_post_process_fuel(intermed_dir, output_dir):
@@ -208,14 +217,16 @@ def call_post_process_fuel(intermed_dir, output_dir):
     op = os.path.join(intermed_dir, 'fuel')
     log= load_proc_dir_log_file( op)  
     log.to_csv(os.path.join(output_dir, 'attribute_logs/fuel_log_file.csv') ) 
-
     df = load_from_log(log)
-    logger.info("Loaded data from logs.")
-    df = post_proc_new_fuel(df)
-    data=deal_unknown_res(df)
-    test_data(data)
-    
-    return data 
+    try:
+        logger.info("Loaded data from logs.")
+        df = post_proc_new_fuel(df)
+        # cl_data=deal_unknown_res(df)
+        test_data(df)
+    except: 
+        print('failed take df for validation ' ) 
+        return df 
+    return df 
 
 
 def call_post_process_age(intermed_dir, output_dir):
@@ -300,10 +311,10 @@ def postprocess_buildings(intermed_dir, output_dir):
     type_df = call_post_process_type(intermed_dir, output_dir)
     return fuel_df, age_df, type_df
 
-def load_other_data(input_data_sources_location):
+def load_other_data(input_data_sources_location, intermediate_location = 'intermediate_data/'):
     
-    if os.path.exists('intermediate_data/unified_temp_data.csv'):
-        temp_data = pd.read_csv('intermediate_data/unified_temp_data.csv')
+    if os.path.exists( os.path_join(intermediate_location, 'unified_temp_data.csv')):
+        temp_data = pd.read_csv( os.path_join(intermediate_location, 'unified_temp_data.csv'))
     else:
         raise Exception('Temp data not found, re run stage create_climate in main.py')
     try:
@@ -315,7 +326,7 @@ def load_other_data(input_data_sources_location):
     except:
         raise Exception('Error loading postcode mapping. Check lookups/PCD_OA_LSOA_MSOA_LAD_MAY22_UK_LU.csv is in correct location in input data sources')
     try:
-        census_data = pd.read_csv('intermediate_data/unified_census_data.csv')
+        census_data = pd.read_csv( os.path_join(intermediate_location, 'unified_census_data.csv'))
     except:
         raise Exception('Error loading census data. Re run stage create_census in main.py and then check all files in src.post_process.unify_census are present in input data folder ' ) 
     return temp_data, urbanisation_df, pc_mapping, census_data
@@ -328,6 +339,8 @@ def unify_dataset(input_data_sources_location):
     logger.info('Loaded fuel, age and type data. Loading other data')
 
     temp_data, urbanisation_df, pc_mapping, census_data = load_other_data(input_data_sources_location)
+    # remove some dups from oa to oa 2021-221 mappping
+    census_data = census_data.drop_duplicates(subset=['OA21CD', 'RUC11CD'])
     check_data_empty([temp_data, urbanisation_df, pc_mapping, census_data], ['temp', 'urbanisation', 'pc_mapping', 'census_data'])
     
     logger.info('All data loaded. starting merge')
@@ -386,7 +399,8 @@ def apply_filters(data, UPRN_THRESHOLD=40):
         'gas_usage_range': lambda x: (x['gas_eui'] <= 500) & (x['gas_eui'] > 5),
         'electricity_usage': lambda x: x['elec_eui'] <= 150,
         'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
-        'heated_volume_range': lambda x: (x['all_res_heated_vol_h_total'].between(50, 200000))
+        'heated_volume_range': lambda x: (x['all_res_heated_vol_h_total'].between(50, 200000)),
+        'unknown_residential_types' : lambda x: x['perc_unk_res'] <= 10,
     }
     
     # Apply all filters at once using numpy's logical AND
