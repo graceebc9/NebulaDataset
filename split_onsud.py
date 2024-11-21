@@ -1,4 +1,5 @@
 from src.split_onsud_file import split_onsud_and_postcodes
+import os 
 
 onsud_path_base = '/home/gb669/rds/hpc-work/energy_map/data/onsud_files/Data'
 PC_SHP_PATH ='/rds/user/gb669/hpc-work/energy_map/data/postcode_polygons/codepoint-poly_5267291'
