@@ -107,13 +107,34 @@ def update_outbuildings(test):
 
 
 
-def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
+# def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
+#     df['min_side'] = df['geometry'].astype(object).apply(min_side)
+#     df['threex_minside'] = [x * 3 for x in df['min_side']]
+#     df['validated_height'] = np.where(df['height_numeric'] >= df['threex_minside'],   np.nan,  df['height_numeric'])
+#     df['validated_fc'] = np.where(((df['av_fl_height']>= MAX_THRESHOLD_FLOOR_HEIGHT )| (df['av_fl_height'] <= MIN_THRESH_FL_HEIGHT )) & (df['height']< df['threex_minside']) , np.nan, df['floor_count_numeric'])
+#     return df 
+
+def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT=2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
     df['min_side'] = df['geometry'].astype(object).apply(min_side)
     df['threex_minside'] = [x * 3 for x in df['min_side']]
-    df['validated_height'] = np.where(df['height_numeric'] >= df['threex_minside'],   np.nan,  df['height_numeric'])
-    df['validated_fc'] = np.where(((df['av_fl_height']>= MAX_THRESHOLD_FLOOR_HEIGHT )| (df['av_fl_height'] <= MIN_THRESH_FL_HEIGHT )) & (df['height']< df['threex_minside']) , np.nan, df['floor_count_numeric'])
-    return df 
-
+    
+    # Update height validation to include new constraint for heights < 2m with floor count
+    df['validated_height'] = np.where(
+        (df['height_numeric'] >= df['threex_minside']) | 
+        ((df['height_numeric'] < 2) & df['floor_count_numeric'].notna()),
+        np.nan,
+        df['height_numeric']
+    )
+    
+    df['validated_fc'] = np.where(
+        ((df['av_fl_height'] >= MAX_THRESHOLD_FLOOR_HEIGHT) | 
+         (df['av_fl_height'] <= MIN_THRESH_FL_HEIGHT)) & 
+        (df['height'] < df['threex_minside']),
+        np.nan,
+        df['floor_count_numeric']
+    )
+    
+    return df
 
 
 def fill_local_averages(df):
@@ -129,8 +150,10 @@ def fill_local_averages(df):
         raise Exception('no local fill ')
 
     fc_fla= df[~df['validated_fc'].isna()]['validated_fc'].mean()
+    
     height_fla = df[~df['validated_height'].isna()]['validated_height'].mean()
     
+    df['fc_filled'] = np.where(df['validated_fc'].isna(), fc_fla, df['validated_fc'])
     df['height_filled'] = np.where(df['validated_height'].isna(), height_fla, df['validated_height'] )
     df = create_height_bucket_cols(df, 'height_filled')
     logger.debug('Fill local averages complete')
@@ -161,7 +184,8 @@ def create_heated_vol(df):
     """
     calc heated premise are
     """
-    df['total_fl_area'] = df['premise_area'] * df['global_average_floorcount']
+    df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
+    df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
     
     return df 
 
@@ -254,7 +278,7 @@ def test_building_metrics(df):
     """Run various assertions on building metrics."""
 
 
-    for c in ['total_fl_area']:
+    for c in ['total_fl_area_H', 'total_fl_area_FC']:
         check_nulls_percent(df, c, 0)
 
     test = df[df['validated_height'].isna()].copy() 

@@ -9,9 +9,10 @@ import numpy as np
 from typing import Dict, Optional, List
 
 # Configuration constants
-COLS = ['premise_area', 'total_fl_area', 'base_floor', 
+COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'base_floor', 
         'basement_heated_vol', 'listed_bool', 'uprn_count']
-COLS_OB = ['premise_area', 'total_fl_area']
+
+COLS_OB = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'uprn_count']
 RES_USE_TYPES = [
     'Medium height flats 5-6 storeys', 'Small low terraces',
     '3-4 storey and smaller flats', 'Tall terraces 3-4 storeys',
@@ -88,7 +89,7 @@ def process_buildings(df: Optional[pd.DataFrame]) -> Dict:
         ),
             **calc_df_sum_attribute(
             res_df[res_df['premise_type'] == None] if not res_df.empty else pd.DataFrame(), 
-            COLS_OB, 'unknown_res_'
+            COLS, 'unknown_res_'
         )
     }
 
