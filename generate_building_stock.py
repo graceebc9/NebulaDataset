@@ -17,13 +17,13 @@ def determine_process_settings():
         
     # Get stage settings from environment variables with defaults
     stages = {
-        'STAGE0_split_onsud': False 
-        'STAGE1_generate_census': False
-        'STAGE1_generate_climate': False
+        'STAGE0_split_onsud': False ,
+        'STAGE1_generate_census': False,
+        'STAGE1_generate_climate': False,
         'STAGE1_generate_buildings_energy': os.getenv('ENERGY', 'no').lower() == 'yes',
         'STAGE1_generate_building_age': os.getenv('AGE', 'no').lower() == 'yes',
         'STAGE1_generate_building_typology': os.getenv('TYPE', 'no').lower() == 'yes',
-        'STAGE3_post_process_data': False
+        'STAGE3_post_process_data': False,
     }
     
     logger.info(f"Stage settings: {stages}")
