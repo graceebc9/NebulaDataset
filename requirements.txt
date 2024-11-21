@@ -11,3 +11,4 @@ pyproj==3.4.0
 rasterio==1.3.7
 pyogrio
 rtree==1.0.1
+rioxarray== 0.14.1 

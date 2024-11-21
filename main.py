@@ -62,8 +62,8 @@ else:
 #########################################  Stages to run YOU CAN UPDATE TO RUN SUBSET OF PIPELINE   #################################################
 STAGE0_split_onsud = False 
 STAGE1_generate_census = False 
-STAGE1_generate_climate = True 
-STAGE1_generate_buildings_energy= False
+STAGE1_generate_climate = False 
+STAGE1_generate_buildings_energy= True
 STAGE1_generate_building_age = False 
 STAGE1_generate_building_typology = False 
 STAGE3_post_process_data = True 
@@ -123,7 +123,7 @@ def main():
 
     if STAGE1_generate_census:
         from src import create_census
-        create_census.main() 
+        create_census.main(location_input_data_folder) 
 
     if STAGE1_generate_climate:
         from src import create_climate
@@ -181,7 +181,7 @@ def main():
     if STAGE3_post_process_data:
         data = unify_dataset(location_input_data_folder)
         res_df = apply_filters(data , UPRN_THRESHOLD = UPRN_TO_GAS_THRESHOLD)
-        
+
         data.to_csv(os.path.join(OUTPUT_DIR, 'Unfiltered_processed_data.csv') ) 
         res_df.to_csv(os.path.join(OUTPUT_DIR, "NEBULA_data_filtered.csv"))
         logger.info(f"Nebual Datasets saved to {os.path.join(OUTPUT_DIR, 'final_data')}" ) 
