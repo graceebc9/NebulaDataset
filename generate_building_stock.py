@@ -12,12 +12,31 @@ logger = get_logger(__name__)
 
 import sys
 
+def determine_process_settings():
+    """Determine processing settings based on environment"""
+        
+    # Get stage settings from environment variables with defaults
+    stages = {
+        'STAGE0_split_onsud': False 
+        'STAGE1_generate_census': False
+        'STAGE1_generate_climate': False
+        'STAGE1_generate_buildings_energy': os.getenv('ENERGY', 'no').lower() == 'yes',
+        'STAGE1_generate_building_age': os.getenv('AGE', 'no').lower() == 'yes',
+        'STAGE1_generate_building_typology': os.getenv('TYPE', 'no').lower() == 'yes',
+        'STAGE3_post_process_data': False
+    }
+    
+    logger.info(f"Stage settings: {stages}")
+    return stages
+
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python generate_building_stock.py <batch_path>")
         sys.exit(1)
     
     batch_path = sys.argv[1]
+    stages = determine_process_settings()
     # Setup logging
     logger.info("Starting data processing pipeline")
     
