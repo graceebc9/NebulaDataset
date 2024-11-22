@@ -29,7 +29,9 @@ logger = get_logger(__name__)
 def gen_batch_ids(batch_ids: list, log_file: str, logger: logging.Logger) -> list:
     """Generate batch IDs, excluding already processed ones."""
     if os.path.exists(log_file):
+
         logger.info('Found existing log file, removing already processed IDs')
+        logger.info(f'Log file: {log_file}')
         logger.debug(f'Original batch size: {len(batch_ids)}')
         
         log = pd.read_csv(log_file)

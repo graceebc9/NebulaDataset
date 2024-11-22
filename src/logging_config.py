@@ -1,21 +1,21 @@
-# src/utils/logging_config.py
 import logging
-import argparse
-from pathlib import Path
+import os
 
-def setup_logging(default_level='INFO'):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--log',
-                       default=default_level,
-                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                       help='Set the logging level')
-    args = parser.parse_args()
+def setup_logging(log_level='INFO'):
+    """Simple logging setup that can be used across all scripts"""
+    # Create logs directory if it doesn't exist
+    os.makedirs('logs', exist_ok=True)
     
+    # Configure logging
     logging.basicConfig(
-        level=getattr(logging, args.log),
-        format='%(asctime)s - %(pathname)s:%(lineno)d - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        level=log_level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('logs/processing.log'),
+            logging.StreamHandler()
+        ]
     )
 
 def get_logger(name):
+    """Get a logger instance for the module"""
     return logging.getLogger(name)

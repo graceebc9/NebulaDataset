@@ -5,19 +5,18 @@ from src.postcode_utils import load_ids_from_file
 from src.pc_main import postcode_main, run_fuel_process, run_age_process, run_type_process
 from src.post_process import apply_filters, unify_dataset
 from src.logging_config import get_logger, setup_logging
+import argparse 
+import sys
 
+# Initialize logging
 setup_logging()
 logger = get_logger(__name__)
 
 
-import sys
-
 def determine_process_settings():
     """Determine processing settings based on environment"""
-        
-    # Get stage settings from environment variables with defaults
     stages = {
-        'STAGE0_split_onsud': False ,
+        'STAGE0_split_onsud': False,
         'STAGE1_generate_census': False,
         'STAGE1_generate_climate': False,
         'STAGE1_generate_buildings_energy': os.getenv('ENERGY', 'no').lower() == 'yes',
@@ -25,31 +24,44 @@ def determine_process_settings():
         'STAGE1_generate_building_typology': os.getenv('TYPE', 'no').lower() == 'yes',
         'STAGE3_post_process_data': False,
     }
-    
-    logger.info(f"Stage settings: {stages}")
     return stages
 
-
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python generate_building_stock.py <batch_path>")
-        sys.exit(1)
+    print('Creating parser')
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='Process building stock data')
+    parser.add_argument('batch_path', type=str, help='Path to the batch file')
+    parser.add_argument('--log', 
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                       default='INFO',
+                       help='Set the logging level')
+    parser.add_argument('--log-size', type=int, default=1000,
+                       help='Size of logging batches')
+    parser.add_argument('--onsud-path', type=str,
+                       help='Override ONSUD path from environment')
     
-    batch_path = sys.argv[1]
+    # Parse arguments
+    args = parser.parse_args()
+    
+    # Setup logging with argument-provided level
+    
+    print(f'Processing batch path: {args.batch_path}')
+    batch_path = args.batch_path
+    print('Loading stages')
     stages = determine_process_settings()
-    # Setup logging
-    logger.info("Starting data processing pipeline")
+    print(stages)
     
     
-    onsud_path_base = os.getenv('ONSUD_PATH')
+    # Get paths from environment variables
+    ONSUD_BASE = os.getenv('ONSUD_BASE')
     PC_SHP_PATH = os.getenv('PC_SHP_PATH')
     BUILDING_PATH = os.getenv('BUILDING_PATH')
     GAS_PATH = os.getenv('GAS_PATH')
     ELEC_PATH = os.getenv('ELEC_PATH')
-
+    
     # Validate input paths
     required_paths = {
-        'ONSUD base path': onsud_path_base,
+        'ONSUD base path': ONSUD_BASE,
         'Postcode shapefile path': PC_SHP_PATH,
         'Building data path': BUILDING_PATH,
         'Gas data path': GAS_PATH,
@@ -57,21 +69,21 @@ def main():
     }
 
     for name, path in required_paths.items():
-        if not os.path.exists(path):
-            logger.error(f"{name} not found at: {path}")
+        if not path or not os.path.exists(path):
+            
             raise FileNotFoundError(f"{name} not found at: {path}")
-        logger.debug(f"Verified {name} at: {path}")
-
-
+        
 
     # Process batches
-    logger.info(f"Processing batch: {batch_path}")
+    
     label = batch_path.split('/')[-2]
+    print('label:', label)  
     batch_id = batch_path.split('/')[-1].split('.')[0].split('_')[-1]
-
+    print('batch_id:', batch_id)
     # Run fuel calculations
     if stages['STAGE1_generate_buildings_energy']:
-        logger.info("Running fuel calculations")
+        print('starting fuel')  
+        onsud_path = os.path.join(os.path.dirname(batch_path), f'onsud_{batch_id}.csv') 
         postcode_main(
             batch_path=batch_path,
             data_dir='intermediate_data',
@@ -86,12 +98,12 @@ def main():
             elec_path=ELEC_PATH,
             overlap_outcode=None,
             overlap='No',
-            log_size=log_size
+            log_size=args.log_size
         )
 
     # Run age calculations
     if stages['STAGE1_generate_building_age']:
-        logger.info("Running age calculations")
+        
         postcode_main(
             batch_path=batch_path,
             data_dir='intermediate_data',
@@ -102,12 +114,12 @@ def main():
             batch_label=batch_id,
             attr_lab='age',
             process_function=run_age_process,
-            log_size=log_size
+            log_size=args.log_size
         )
 
     # Run typology calculations
     if stages['STAGE1_generate_building_typology']:
-        logger.info("Running typology calculations")
+        
         postcode_main(
             batch_path=batch_path,
             data_dir='intermediate_data',
@@ -118,10 +130,10 @@ def main():
             batch_label=batch_id,
             attr_lab='type',
             process_function=run_type_process,
-            log_size=log_size
+            log_size=args.log_size
         )
 
-logger.info("Completed processing pipeline")
+
 
 if __name__ == "__main__":
     main()
