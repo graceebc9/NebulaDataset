@@ -75,15 +75,16 @@ def main():
         
 
     # Process batches
-    
+    print('Processing batch')
+    print(batch_path)
     label = batch_path.split('/')[-2]
     print('label:', label)  
     batch_id = batch_path.split('/')[-1].split('.')[0].split('_')[-1]
     print('batch_id:', batch_id)
+    onsud_path = os.path.join(os.path.dirname(batch_path), f'onsud_{batch_id}.csv') 
     # Run fuel calculations
     if stages['STAGE1_generate_buildings_energy']:
         print('starting fuel')  
-        onsud_path = os.path.join(os.path.dirname(batch_path), f'onsud_{batch_id}.csv') 
         postcode_main(
             batch_path=batch_path,
             data_dir='intermediate_data',
