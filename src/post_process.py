@@ -7,9 +7,11 @@ from src.postcode_utils import load_ids_from_file,  check_merge_files, join_pc_m
 from src.confidence_floor_area import calculate_floor_area_confidence
 
 from src.load_data import load_from_log, load_proc_dir_log_file, load_pc_to_output_area_mapping, load_postcode_geometry_data
-
+from src.validations import call_validations
 from src.logging_config import get_logger
 logger = get_logger(__name__)
+
+
 
 
 ######################### Post process type ######################### 
@@ -270,6 +272,10 @@ def unify_dataset(input_data_sources_location):
     logger.info('Data merged successfully')
     
     data = final_clean(data)
+
+    # check vals
+    call_validations()
+    
     return data
 
 
@@ -281,7 +287,12 @@ def check_data_empty(list_dfs, names ):
 
 
 def final_clean(new_df):
-    cols_to_drop = ['index','ObjectId', 'region_y','region_x',  'len_res_x','len_res_y', 'Unknown', 'None_type', 'Unnamed: 0' ]
+    cols_to_drop = ['index','ObjectId', 'region_y','region_x',  'len_res_x','len_res_y', 'Unknown', 'None_type', 
+    'POSTCODE',
+    'pcd7',
+    'pcd8',
+    'pcds',
+     ]
     new_df.drop(cols_to_drop, axis=1, inplace=True)
     cols_rename =  {'all_unknown_pct': 'all_unknown_typology_pct',
     'all_unknown': 'all_unknown_typology',
