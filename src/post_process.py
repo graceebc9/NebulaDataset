@@ -12,9 +12,6 @@ from src.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-PERC_UNKNOWN_RES_ALLOWED = 10
-
-
 ######################### Post process type ######################### 
 
 def validate_and_calculate_percentages_type(df):
@@ -131,8 +128,6 @@ def post_proc_new_fuel(df):
     
     df['gas_EUI_H'] = df['total_gas'] / df['clean_res_total_fl_area_H_total']
     df['elec_EUI_H'] = df['total_elec'] / df['clean_res_total_fl_area_H_total']
-
-
 
     df['all_res_total_fl_area_H_total'] = df['clean_res_total_fl_area_H_total'] + df['outb_res_total_fl_area_H_total'] + df['unknown_res_total_fl_area_H_total']
     df['all_res_total_fl_area_FC_total'] = df['clean_res_total_fl_area_FC_total'] + df['outb_res_total_fl_area_FC_total'] + df['unknown_res_total_fl_area_FC_total']
@@ -274,6 +269,7 @@ def unify_dataset(input_data_sources_location):
     check_data_empty([data], ['census data'])
     logger.info('Data merged successfully')
     
+    data = final_clean(data)
     return data
 
 
@@ -284,6 +280,17 @@ def check_data_empty(list_dfs, names ):
         return df
 
 
+def final_clean(new_df):
+    cols_to_drop = ['index','ObjectId', 'region_y','region_x',  'len_res_x','len_res_y', 'Unknown', 'None_type', 'Unnamed: 0' ]
+    new_df.drop(cols_to_drop, axis=1, inplace=True)
+    cols_rename =  {'all_unknown_pct': 'all_unknown_typology_pct',
+    'all_unknown': 'all_unknown_typology',
+    'None_age': 'all_none_age',
+    'None_age_pct': 'all_none_age_pct',
+    'unknown_alltypes': 'unknown_alltypes_count'
+    }
+    new_df.rename(columns=cols_rename, inplace=True)
+    return new_df
 
 
 ######################### Filter to get final NEBULA sample ######################### 
