@@ -53,17 +53,17 @@ OUTPUT_DIR = 'final_dataset'
 # Run generation locally (True) or on HPC (False)
 running_locally = True 
 
-# Regions to run
-if running_locally:
-    region_list = [ 'NW']
-else:
-    regions_list = os.getenv('REGION_LIST')
+# New environment checks
+running_locally = os.getenv('SLURM_ARRAY_TASK_ID') is None
+region_list = ['NW'] if running_locally else [os.getenv('REGION_LIST')]
+batch_id = os.getenv('BATCH_ID')  # Only used in HPC mode
+
 
 #########################################  Stages to run YOU CAN UPDATE TO RUN SUBSET OF PIPELINE   #################################################
 STAGE0_split_onsud = False 
 STAGE1_generate_census = False 
 STAGE1_generate_climate = False 
-STAGE1_generate_buildings_energy= True
+STAGE1_generate_buildings_energy= False
 STAGE1_generate_building_age = False 
 STAGE1_generate_building_typology = False 
 STAGE3_post_process_data = True 
@@ -88,6 +88,7 @@ from src.logging_config import get_logger, setup_logging
 
 setup_logging()  
 logger = get_logger(__name__)
+
 
 
 def main():
@@ -128,7 +129,6 @@ def main():
     if STAGE1_generate_climate:
         from src import create_climate
         create_climate.main( PC_SHP_PATH, TEMP_1KM_PATH )
-
 
 
     # Run fuel calculations
@@ -182,8 +182,8 @@ def main():
         data = unify_dataset(location_input_data_folder)
         res_df = apply_filters(data , UPRN_THRESHOLD = UPRN_TO_GAS_THRESHOLD)
 
-        data.to_csv(os.path.join(OUTPUT_DIR, 'Unfiltered_processed_data.csv') ) 
-        res_df.to_csv(os.path.join(OUTPUT_DIR, "NEBULA_data_filtered.csv"))
+        data.to_csv(os.path.join(OUTPUT_DIR, 'NEBULA_englandwales_unfiltered.csv') ) 
+        res_df.to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_filtered.csv"))
         logger.info(f"Nebual Datasets saved to {os.path.join(OUTPUT_DIR, 'final_data')}" ) 
     logger.info("Data processing pipeline completed")
 
