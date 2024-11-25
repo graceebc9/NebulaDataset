@@ -20,7 +20,8 @@ conda activate nebula
 
 # Install requirements
 pip install -r requirements.txt
-conda install libgdal==3.6.4 libtiff==4.5.0
+conda install conda-forge::libgdal==3.6.4
+#  libtiff==4.5.0
 ```
 
 ### Required Data Sources
@@ -44,43 +45,68 @@ Place these files in the `input_data_sources` directory:
 ## Directory Structure
 
 ```
-input_data_sources/          # Input data files
+input_data_sources/                   # Input data files
 ├── census_2021/
 ├── climate_data/
 ├── energy_data/
 ├── lookups/
-│   ├── oa_lsoa_2021/       # OA to LSOA mapping
-│   └── oa_2011_2021/       # OA conversion lookup
+│   ├── oa_lsoa_2021/               # OA to LSOA mapping
+│   └── oa_2011_2021/               # OA conversion lookup
 ├── ONS_UPRN_DATABASE/
 ├── postcode_areas/
 └── urban_rural_2011/
 
-batches/                     # Processing batch lists
+batches/                         # Processing batch lists
 
-src/                        # Source code
+src/                              # Source code
 
 
-intermediate_data/          # Temporary processing files
+intermediate_data/                # Temporary processing files - sub-themes results stored here
+├── age/
+├── census_attrs/
+├── fuel/ 
+├── temp_data/         
+└── type/
 
-final_dataset/             # Output files
+final_dataset/                   # Output files
 ├── NEBULA_data_filtered.csv
 ├── Unfiltered_processed_data.csv
-└── attribute_logs/
+└── attribute_logs/             # Logs for building stock batch calculations - shows counts of records in each batch 
+    ├── age_log_file.csv
+    ├── fuel_log_file.csv
+│   └── fuel_log_file.csv
+
+
+main.py                     # Process for generating whole dataset if running locally 
+
+split_onsud.py               # If running on HPC - stage 1 generates batch files 
+generate_building_stock.py   # HPC python wrapper 
+nebula_job.sh                # If running on HPC - bash script to submit multiple batches 
+submit_nebula.sh            # If running on HPC - slurm submit for single batch 
+
 ```
 
 ## Usage
 
 1. Install dependencies from requirements.txt
 2. Place input data in appropriate directories
+#### If running locally 
 3. Configure variables in main.py as needed
 4. Run the processing pipeline:
    ```bash
    python main.py
    ```
+#### If running on HPC 
+3. Generate the batches of 10k
+   ```bash
+   split_onsud.py
+   ```
+4. Update slurm scripts nebula_job.sh and submit_nebula.sh to run fuel, age and typology calculation 
+5. Submit multiple jobs using nebula_job.sh 
+6. When all themes finished calculting, update main.py to just call the post process section 
+
 
 ## Output Dataset
-
-
 
 The pipeline generates postcode-level statistics including:
 - Building age and type distributions
@@ -89,6 +115,9 @@ The pipeline generates postcode-level statistics including:
 - Building statistics and averages
 
 ## Notes
+- We batch up the process of converting the building stock dataset into postcode attributes (themes: building stock, typoloy and age). This enables better logging and multi threading. Current set up is to process each region seperartely and split into batches of 10k postcodes. 
+- We provide two generation routes: local and HPC genreation. For one region: running locally takes an estimated 48 hours. Multi threading can speed this up.
+- When running on HPC, we submit each type / region / batch as a seperate job. Using a 8GB (3 CPUS) job, each 10k batch takes approx. 1.5 hours for fuel and 1 for age/tpye. Total run time: (152 * 1.5) + (2 * 152 * 1)  = 532 hours. 
 - Check overlapping_pcs.txt for postcode boundary issues
 - See global_avs/ for reference statistics
 - Intermediate files can be safely deleted after final dataset generation
