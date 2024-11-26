@@ -68,6 +68,7 @@ def process_buildings(df: Optional[pd.DataFrame]) -> Dict:
         res_masks = {
             'clean': res_df['premise_type'].isin(RES_USE_TYPES),
             'outbuilding': res_df['premise_type'] == 'Domestic outbuilding'
+            # 'all_res' : res_df['map_simple_use'] == 'Residential'
         }
         unexpected_types = set(res_df['premise_type']) - set(RES_USE_TYPES + EXCL_RES_TYPES)
         if unexpected_types:
@@ -78,7 +79,9 @@ def process_buildings(df: Optional[pd.DataFrame]) -> Dict:
     
         'mixed_alltypes_count': len(df[masks['mixed']]),
         'comm_alltypes_count': len(df[masks['commercial']]),
-        'unknown_alltypes': len(df[masks['unknown']]),
+        'unknown_alltypes_count': len(df[masks['unknown']]),
+        'all_residential_types_count' : len(res_df),
+
         **calc_df_sum_attribute(
             res_df[res_df['premise_type'].isin(RES_USE_TYPES)] if not res_df.empty else pd.DataFrame(), 
             COLS, 'clean_res_'
