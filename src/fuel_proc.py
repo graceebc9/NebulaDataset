@@ -95,6 +95,8 @@ def process_fuel_batch_base(process_fn, pc_batch, data, gas_df, elec_df,
                     existing_header = file.readline().strip().split(',')
                     if len(df.columns) != len(existing_header):
                         logger.error(f"Column count mismatch. Expected {len(existing_header)}, got {len(df.columns)}")
+                        logger.info(f"Existing header columns: {existing_header}")
+                        logger.info(f"New DataFrame columns: {list(df.columns)}")
                         raise Exception('Results DataFrame has incorrect number of columns')
                     
                     # Reorder columns to match existing file

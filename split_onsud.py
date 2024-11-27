@@ -1,10 +1,12 @@
 from src.split_onsud_file import split_onsud_and_postcodes
 import os 
-
+# Update paths as required
 onsud_path_base = '/home/gb669/rds/hpc-work/energy_map/data/onsud_files/Data'
 PC_SHP_PATH ='/rds/user/gb669/hpc-work/energy_map/data/postcode_polygons/codepoint-poly_5267291'
+
+# Defauly batch size of 10k 
 batch_size=10000
-# Split ONSUD data if required
+# Run for all regions 
 region_list = ['EM', 'WM', 'LN', 'SE', 'SW', 'NE', 'NW', 'YH', 'EE', 'WA' ] 
     
 for region in region_list:
