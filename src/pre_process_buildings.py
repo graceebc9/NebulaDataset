@@ -43,7 +43,7 @@ DEFAULT_FLOOR_HEIGHT = 2.3
 def load_avg_floor_count():
     """Load the average floor count data from a CSV file."""
     current_dir = os.path.dirname(__file__)
-    csv_path = os.path.join(current_dir, 'global_avs' , 'updated_pp_global_average_fl_count_bucket_25.csv')
+    csv_path = os.path.join(current_dir, 'global_avs' , 'global_average_floor_count_bucket_clean.csv')
     
     return pd.read_csv(csv_path)
 
@@ -57,16 +57,13 @@ def get_height_bins():
     height_labels = [f"{b}-{height_bins[i+1]}m" for i, b in enumerate(height_bins[:-1])]
     return height_bins, height_labels
 
-def create_height_bucket_col(df):
-    """Bucket height into predefined categories."""
-    df['height_numeric'] = pd.to_numeric(df['height'], errors='coerce').fillna(0) 
-    height_bins, height_labels = get_height_bins() 
-    df['height_bucket'] = pd.cut(df['height_numeric'], bins=height_bins, labels=height_labels, right=False)
-    return df
 
 def create_height_bucket_cols(df, col):
     """Bucket height into predefined categories."""
     height_bins, height_labels = get_height_bins() 
+    # check if col exists in df 
+    if col not in df.columns:
+        raise Exception(f'Column {col} not found in df')
     df[f'{col}_bucket'] = pd.cut(df[col], bins=height_bins, labels=height_labels, right=False)
     return df
 
@@ -107,12 +104,6 @@ def update_outbuildings(test):
 
 
 
-# def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
-#     df['min_side'] = df['geometry'].astype(object).apply(min_side)
-#     df['threex_minside'] = [x * 3 for x in df['min_side']]
-#     df['validated_height'] = np.where(df['height_numeric'] >= df['threex_minside'],   np.nan,  df['height_numeric'])
-#     df['validated_fc'] = np.where(((df['av_fl_height']>= MAX_THRESHOLD_FLOOR_HEIGHT )| (df['av_fl_height'] <= MIN_THRESH_FL_HEIGHT )) & (df['height']< df['threex_minside']) , np.nan, df['floor_count_numeric'])
-#     return df 
 
 def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT=2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
     df['min_side'] = df['geometry'].astype(object).apply(min_side)
@@ -180,14 +171,47 @@ def fill_glob_avs(df, fc = None  ):
     return df 
 
 
+# def create_heated_vol(df):
+#     """
+#     calc heated premise are
+#     """
+#     df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
+#     df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
+#     df ['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
+#     return df 
+
 def create_heated_vol(df):
     """
-    calc heated premise are
+    Calculate heated premise area metrics and create meta columns for analysis.
+    Hierarchy: H (global average) → valfc (filled floor count) → FC (raw floor count)
+    Also includes average of available values.
     """
+    # Calculate base metrics
     df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
     df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
+    df['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
     
-    return df 
+    # Create meta column with preferred hierarchy
+    conditions = [
+        df['total_fl_area_H'].notna(),
+        df['total_fl_area_valfc'].notna(),
+        df['total_fl_area_FC'].notna()
+    ]
+    choices_value = [
+        df['total_fl_area_H'], 
+        df['total_fl_area_valfc'], 
+        df['total_fl_area_FC']
+    ]
+    choices_source = ['H', 'valfc', 'FC']
+    
+    df['total_fl_area_meta'] = np.select(conditions, choices_value, default=np.nan)
+    df['total_fl_area_meta_source'] = np.select(conditions, choices_source, default='none')
+    
+    # Calculate average of available values
+    columns = ['total_fl_area_H', 'total_fl_area_valfc', 'total_fl_area_FC']
+    df['total_fl_area_avg'] = df[columns].mean(axis=1)
+    
+    return df
 
 def create_basement_metrics(df):
     basement_conditions = [

@@ -109,13 +109,13 @@ def validate_vol_per_uprn(df):
 
 def post_proc_new_fuel(df):
     
-    print(df.columns.tolist() )
+    # print(df.columns.tolist() )
     ob_cols = [x for x in df.columns if x.startswith('outb')]
     unknown_cols = [x for x in df.columns if x.startswith('unknown_res')]
     for col in ob_cols + unknown_cols:
         df[col] = df[col].fillna(0)
     df['outcode'] = df['postcode'].apply(lambda x: str(x).split(' ')[0])
-    df['total_res_total_buildings'] = df['clean_res_total_buildings'] + df['unknown_res_total_buildings'] + df['outb_res_total_buildings']
+    df['total_res_total_buildings'] = df['clean_res_total_buildings'].fillna(0) + df['unknown_res_total_buildings'].fillna(0) + df['outb_res_total_buildings'].fillna(0)
     df['percent_residential'] = df['total_res_total_buildings'] / df['all_types_total_buildings']
     df['perc_clean_res'] = df['clean_res_total_buildings'] / df['all_types_total_buildings']
     df['perc_unknown_res'] = df['unknown_res_total_buildings'] / df['total_res_total_buildings'] * 100 
@@ -244,6 +244,7 @@ def unify_dataset(input_data_sources_location):
     logger.info('Starting post processing of buildings')
     os.makedirs('final_dataset', exist_ok=True)
     fuel_df, age_df, type_df = postprocess_buildings('intermediate_data', 'final_dataset')
+    
     check_data_empty([fuel_df, age_df, type_df], ['fuel', 'age', 'type'])
     logger.info('Loaded fuel, age and type data. Loading other data')
 
@@ -251,9 +252,10 @@ def unify_dataset(input_data_sources_location):
     # remove some dups from oa to oa 2021-221 mappping
     census_data = census_data.drop_duplicates(subset=['OA21CD', 'RUC11CD'])
     check_data_empty([temp_data, urbanisation_df, pc_mapping, census_data], ['temp', 'urbanisation', 'pc_mapping', 'census_data'])
-    
     logger.info('All data loaded. starting merge')
     data = merge_fuel_age_type(fuel_df, type_df, age_df, temp_data)
+    
+
     logger.info('Data merged fuel age temp type successfully')
     check_data_empty([data], ['merged data'])
     logger.info('Starting to merge postcode mapping and urbanisation data') 

@@ -9,8 +9,8 @@ import numpy as np
 from typing import Dict, Optional, List
 
 # Configuration constants
-COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'base_floor', 
-        'basement_heated_vol', 'listed_bool', 'uprn_count']
+COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'total_fl_area_valfc', 'total_fl_area_meta', 'total_fl_area_avg',
+ 'base_floor', 'basement_heated_vol', 'listed_bool', 'uprn_count']
 
 COLS_OB = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'uprn_count']
 RES_USE_TYPES = [
@@ -34,15 +34,35 @@ def generate_nulls(cols: List[str], prefix: str = '') -> Dict:
         **{f'{prefix}{col}_total': np.nan for col in cols}
     }
 
+# def calc_df_sum_attribute(df: pd.DataFrame, cols: List[str], prefix: str = '') -> Dict:
+#     """Calculate sum attributes for given DataFrame and columns."""
+#     if df.empty:
+#         return generate_nulls(cols, prefix)
+    
+#     return {
+#         f'{prefix}total_buildings': len(df),
+#         **{f'{prefix}{col}_total': df[col].sum(min_count=1) for col in cols}
+#     }
+
+
 def calc_df_sum_attribute(df: pd.DataFrame, cols: List[str], prefix: str = '') -> Dict:
     """Calculate sum attributes for given DataFrame and columns."""
     if df.empty:
         return generate_nulls(cols, prefix)
     
-    return {
+    result = {
         f'{prefix}total_buildings': len(df),
         **{f'{prefix}{col}_total': df[col].sum(min_count=1) for col in cols}
     }
+    
+    # Add null counts for specific columns directly in the calculation
+    area_cols = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'total_fl_area_valfc', 'total_fl_area_meta', 'total_fl_area_avg']
+    for col in cols:
+        if col in area_cols:
+            result[f'{prefix}{col}_null_count'] = df[col].isna().sum()
+    
+    return result
+
 
 def process_buildings(df: Optional[pd.DataFrame]) -> Dict:
     """Process building data, handling null cases centrally."""

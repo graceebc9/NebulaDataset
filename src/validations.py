@@ -1,8 +1,5 @@
 import pandas as pd
 from pathlib import Path
-
-import pandas as pd
-from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 def load_log_files() -> Dict[str, pd.DataFrame]:
@@ -60,17 +57,12 @@ def validate_log_consistency() -> Dict[str, Dict]:
         # Check region consistency
         for attr, df in dfs.items():
             missing_regions = all_regions - set(df['region'].unique())
+            results['region_consistency'][attr] = {
+                'valid': not missing_regions,
+                'missing_regions': list(missing_regions)
+            }
             if missing_regions:
                 results['valid'] = False
-                results['region_consistency'][attr] = {
-                    'valid': False,
-                    'missing_regions': list(missing_regions)
-                }
-            else:
-                results['region_consistency'][attr] = {
-                    'valid': True,
-                    'missing_regions': []
-                }
         
         # Check batch consistency within regions
         for region in all_regions:
@@ -89,7 +81,6 @@ def validate_log_consistency() -> Dict[str, Dict]:
         # Check count consistency for matching batches
         count_inconsistencies = []
         for region in all_regions:
-            # Get batches that exist in all files for this region
             common_batches = set.intersection(*[
                 region_batches[attr].get(region, set())
                 for attr in dfs.keys()
@@ -114,10 +105,9 @@ def validate_log_consistency() -> Dict[str, Dict]:
             'inconsistencies': count_inconsistencies
         }
         
-        # Add summary
         results['summary'] = {
             'total_regions': len(all_regions),
-            'regions': list(all_regions),
+            'regions': list(sorted(all_regions)),
             'files_checked': list(dfs.keys()),
             'overall_valid': results['valid']
         }
@@ -130,139 +120,180 @@ def validate_log_consistency() -> Dict[str, Dict]:
             'error': str(e)
         }
 
-def print_consistency_results(results: Dict) -> None:
+def validate_batch_lengths(default_length: int = 10000) -> Dict[str, Dict]:
     """
-    Pretty prints the consistency validation results.
+    Validates that only one batch per region has a length different from the default value.
     
     Args:
-        results: Dictionary containing validation results
-    """
-    if 'error' in results:
-        print(f"Error during validation: {results['error']}")
-        return
-        
-    print("\n=== Log Files Consistency Validation ===")
-    print(f"\nOverall Status: {'✓ Valid' if results['valid'] else '✗ Invalid'}")
-    
-    print("\n--- Region Consistency ---")
-    for attr, result in results['region_consistency'].items():
-        if result['missing_regions']:
-            print(f"\n✗ {attr} is missing regions: {', '.join(result['missing_regions'])}")
-        else:
-            print(f"\n✓ {attr} has all regions")
-    
-    print("\n--- Batch Consistency ---")
-    if results['batch_consistency']:
-        for region, inconsistencies in results['batch_consistency'].items():
-            print(f"\nRegion {region} has inconsistencies:")
-            for comparison, batches in inconsistencies.items():
-                print(f"  ✗ {comparison}: Extra batches {batches}")
-    else:
-        print("✓ All regions have consistent batches across files")
-    
-    print("\n--- Count Consistency ---")
-    if results['count_consistency']['inconsistencies']:
-        print("\nFound count inconsistencies:")
-        for inc in results['count_consistency']['inconsistencies']:
-            print(f"\n  Region {inc['region']}, Batch {inc['batch']}:")
-            for attr, count in inc['counts'].items():
-                print(f"    {attr}: {count}")
-    else:
-        print("✓ All matching batches have consistent counts")
-    
-    print("\n--- Summary ---")
-    print(f"Total regions: {results['summary']['total_regions']}")
-    print(f"Regions: {', '.join(results['summary']['regions'])}")
-    print(f"Files checked: {', '.join(results['summary']['files_checked'])}")
-
-
-
-def validate_batch_lengths(default_length=10000):
-    """
-    Validates that only one batch per region has a length different from the default value
-    across age, fuel, and type log files.
-    
-    Args:
-        default_length (int): The expected length for most batches (default: 10000)
+        default_length: The expected length for most batches
     
     Returns:
-        dict: Dictionary containing validation results for each attribute file
+        Dict containing validation results for each attribute file
     """
-    # Define the attributes and their file paths
     attributes = ['age', 'fuel', 'type']
     base_path = 'final_dataset/attribute_logs'
-    print(f'Running validatiions based on a batch size of {default_length}')
-    results = {}
+    results = {'valid': True}
     
     for attr in attributes:
         file_path = f"{base_path}/{attr}_log_file.csv"
         
         try:
-            # Read the log file
             df = pd.read_csv(file_path)
-            
-            # Group by region and count how many batches don't match default_length
             anomalies = df.groupby('region').apply(
                 lambda x: sum(x['len'] != default_length)
             )
             
-            # Check which regions have more than one anomaly
             invalid_regions = anomalies[anomalies > 1].index.tolist()
-            
-            # Get details of all non-default length batches
             anomaly_details = df[df['len'] != default_length].groupby('region').apply(
                 lambda x: x[['batch', 'len']].to_dict('records')
             ).to_dict()
             
+            attr_valid = len(invalid_regions) == 0
             results[attr] = {
-                'valid': len(invalid_regions) == 0,
+                'valid': attr_valid,
                 'invalid_regions': invalid_regions,
                 'anomaly_details': anomaly_details
             }
+            
+            if not attr_valid:
+                results['valid'] = False
             
         except Exception as e:
             results[attr] = {
                 'valid': False,
                 'error': str(e)
             }
+            results['valid'] = False
     
     return results
 
-def print_validation_results(results):
+def validate_region_variations(default_length: int = 10000) -> Dict:
     """
-    Pretty prints the validation results.
+    Validates that each region has at least one batch with a non-default length.
     
     Args:
-        results (dict): Results from validate_batch_lengths function
+        default_length: The expected default length
+    
+    Returns:
+        Dict containing validation results
     """
-    for attr, result in results.items():
-        print(f"\n=== {attr.upper()} Log File ===")
+    base_path = 'final_dataset/attribute_logs'
+    attributes = ['age', 'fuel', 'type']
+    
+    results = {
+        'valid': True,
+        'regions_without_variation': set(),
+        'variation_details': {},
+        'error': None
+    }
+    
+    try:
+        all_regions: Set[str] = set()
+        regions_with_variation: Set[str] = set()
         
-        if 'error' in result:
-            print(f"Error processing file: {result['error']}")
-            continue
+        for attr in attributes:
+            file_path = f"{base_path}/{attr}_log_file.csv"
+            df = pd.read_csv(file_path)
             
-        if result['valid']:
-            print("✓ Valid: Each region has at most one non-standard length batch")
-        else:
-            print("✗ Invalid: Following regions have multiple non-standard length batches, processing has likely not finished:")
-            for region in result['invalid_regions']:
-                print(f"\nRegion: {region}")
+            all_regions.update(df['region'].unique())
+            variations = df[df['len'] != default_length]
+            regions_with_variation.update(variations['region'].unique())
+            
+            for _, row in variations.iterrows():
+                region = row['region']
+                if region not in results['variation_details']:
+                    results['variation_details'][region] = []
                 
+                results['variation_details'][region].append({
+                    'file': attr,
+                    'batch': row['batch'],
+                    'length': row['len']
+                })
+        
+        results['regions_without_variation'] = all_regions - regions_with_variation
+        results['valid'] = len(results['regions_without_variation']) == 0
+        
+        for region in results['variation_details']:
+            results['variation_details'][region].sort(key=lambda x: (x['file'], x['batch']))
+        
+        return results
+    
+    except Exception as e:
+        return {
+            'valid': False,
+            'regions_without_variation': set(),
+            'variation_details': {},
+            'error': str(e)
+        }
 
+def print_validation_summary(variation_results: Dict, 
+                           batch_results: Dict, 
+                           consistency_results: Dict) -> None:
+    """
+    Prints a comprehensive summary of all validation results.
+    
+    Args:
+        variation_results: Results from validate_region_variations
+        batch_results: Results from validate_batch_lengths
+        consistency_results: Results from validate_log_consistency
+    """
+    all_valid = (
+        variation_results.get('valid', False) and 
+        batch_results.get('valid', False) and 
+        consistency_results.get('valid', False)
+    )
+    
+    print("\n=== VALIDATION SUMMARY ===")
+    print(f"\nOverall Validation Status: {'✓ PASSED' if all_valid else '✗ FAILED'}")
+    
+    # Region Variations Check
+    print("\n1. Region Variations Check:")
+    status = "✓ Passed" if variation_results.get('valid', False) else "✗ Failed"
+    print(f"Status: {status}")
+    if not variation_results.get('valid', False):
+        print("Regions missing variations:", 
+              ', '.join(sorted(variation_results.get('regions_without_variation', set()))))
+    
+    # Batch Length Check
+    print("\n2. Batch Length Check:")
+    status = "✓ Passed" if batch_results.get('valid', False) else "✗ Failed"
+    print(f"Status: {status}")
+    if not batch_results.get('valid', False):
+        for attr, result in batch_results.items():
+            if attr != 'valid' and not result.get('valid', True):
+                print(f"- {attr}: Invalid regions:", ', '.join(result.get('invalid_regions', [])))
+    
+    # Consistency Check
+    print("\n3. Log Consistency Check:")
+    status = "✓ Passed" if consistency_results.get('valid', False) else "✗ Failed"
+    print(f"Status: {status}")
+    if not consistency_results.get('valid', False):
+        if consistency_results.get('region_consistency'):
+            for attr, result in consistency_results['region_consistency'].items():
+                if not result['valid']:
+                    print(f"- {attr} missing regions:", ', '.join(result['missing_regions']))
+        if consistency_results.get('count_consistency', {}).get('inconsistencies'):
+            print("- Count inconsistencies found in:", 
+                  len(consistency_results['count_consistency']['inconsistencies']), "batches")
+    
+    # Final Summary
+    print("\n=== FINAL STATUS ===")
+    if all_valid:
+        print("✓ All validation checks passed successfully!")
+    else:
+        print("✗ One or more validation checks failed. Please review the details above.")
 
-
-def call_validations():
-    results = validate_batch_lengths()
-    print_validation_results(results)
-
-    # Run length / consistnecy both validations
-    batch_results = validate_batch_lengths()
+def call_validations(default_length: int = 10000) -> None:
+    """
+    Runs all validation checks and prints a comprehensive summary.
+    
+    Args:
+        default_length: The expected default batch length
+    """
+    print(f"Running validations with default batch size: {default_length}")
+    
+    variation_results = validate_region_variations(default_length)
+    batch_results = validate_batch_lengths(default_length)
     consistency_results = validate_log_consistency()
-
-    # Print results
-    print("=== Batch Length Validation ===")
-    print_validation_results(batch_results)
-
-    print("\n=== Consistency Validation ===")
-    print_consistency_results(consistency_results)
+    
+    print_validation_summary(variation_results, batch_results, consistency_results)
