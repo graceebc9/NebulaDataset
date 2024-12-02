@@ -4,11 +4,12 @@ import os
 import glob
 from src.pre_process_buildings import *
 from src.postcode_utils import load_ids_from_file,  check_merge_files, join_pc_map_three_pc
-from src.confidence_floor_area import calculate_floor_area_confidence
+
 
 from src.load_data import load_from_log, load_proc_dir_log_file, load_pc_to_output_area_mapping, load_postcode_geometry_data
 from src.validations import call_validations
 from src.logging_config import get_logger
+from src.post_process_buildings_stock import post_proc_new_fuel 
 logger = get_logger(__name__)
 
 
@@ -84,21 +85,12 @@ def call_age_checks(df):
 
 ######################### Post process fuel ######################### 
 
-def round_cols(df, list_cols):
-    logger.info('Rounding columns for cols')
-
-    for col in list_cols:
-        df[col] = df[col].round(2)
-    return df
-
 def test_data(df):
     
     logger.info('Starting tests')
-
     assert_larger(df, 'total_gas', 'avg_gas')
     assert_larger(df, 'total_elec', 'avg_elec')
-    # assert_larger(df, 'clean_res_total_fl_area_total', 'clean_res_premise_area_total')
-    
+
     if df['postcode'].duplicated().sum() > 0: 
         raise Exception('Duplicated postcodes found')
     logger.info('Tests passed')
@@ -107,36 +99,43 @@ def validate_vol_per_uprn(df):
     excl = df[(df['max_vol_per_uprn'] < 100) & (df['diff_gas_meters_uprns_res'] > 6)]
     return df[~df.index.isin(excl.index)]
 
-def post_proc_new_fuel(df):
+# def post_proc_new_fuel(df):
     
-    # print(df.columns.tolist() )
-    ob_cols = [x for x in df.columns if x.startswith('outb')]
-    unknown_cols = [x for x in df.columns if x.startswith('unknown_res')]
-    for col in ob_cols + unknown_cols:
-        df[col] = df[col].fillna(0)
-    df['outcode'] = df['postcode'].apply(lambda x: str(x).split(' ')[0])
-    df['total_res_total_buildings'] = df['clean_res_total_buildings'].fillna(0) + df['unknown_res_total_buildings'].fillna(0) + df['outb_res_total_buildings'].fillna(0)
-    df['percent_residential'] = df['total_res_total_buildings'] / df['all_types_total_buildings']
-    df['perc_clean_res'] = df['clean_res_total_buildings'] / df['all_types_total_buildings']
-    df['perc_unknown_res'] = df['unknown_res_total_buildings'] / df['total_res_total_buildings'] * 100 
-    df['perc_unknown_res'] = df['perc_unknown_res'].fillna(0)
+#     # print(df.columns.tolist() )
+#     ob_cols = [x for x in df.columns if x.startswith('outb')]
+#     unknown_cols = [x for x in df.columns if x.startswith('unknown_res')]
+#     for col in ob_cols + unknown_cols:
+#         df[col] = df[col].fillna(0)
+#     df['outcode'] = df['postcode'].apply(lambda x: str(x).split(' ')[0])
+#     df['total_res_total_buildings'] = df['clean_res_total_buildings'].fillna(0) + df['unknown_res_total_buildings'].fillna(0) + df['outb_res_total_buildings'].fillna(0)
+#     # df['percent_residential'] = df['total_res_total_buildings'] / df['all_types_total_buildings']
+#     df['perc_clean_res'] = df['clean_res_total_buildings'] / df['all_types_total_buildings']
+#     df['perc_unknown_res'] = df['unknown_res_total_buildings'] / df['total_res_total_buildings'] * 100 
+#     df['perc_unknown_res'] = df['perc_unknown_res'].fillna(0)
 
-    df['perc_cl_res_basement'] = df['clean_res_base_floor_total'] / df['all_types_total_buildings']
-    df['perc_all_res_listed'] = (df['clean_res_listed_bool_total'] + df['unknown_res_listed_bool_total']) / df['all_types_total_buildings']
-    df['all_res_uprns'] = df['clean_res_uprn_count_total'] + df['outb_res_uprn_count_total'] + df['unknown_res_uprn_count_total']    
+#     df['perc_cl_res_basement'] = df['clean_res_base_floor_total'] / df['all_types_total_buildings']
+#     df['perc_all_res_listed'] = (df['clean_res_listed_bool_total'] + df['unknown_res_listed_bool_total']) / df['all_types_total_buildings']
+#     df['all_res_uprns'] = df['clean_res_uprn_count_total'] + df['outb_res_uprn_count_total'] + df['unknown_res_uprn_count_total']    
 
-    df['diff_gas_meters_uprns_res'] = (np.abs(df['num_meters_gas'] - df['all_res_uprns']) / 
-                                       df['num_meters_gas']) * 100
+#     df['diff_gas_meters_uprns_res'] = (np.abs(df['num_meters_gas'] - df['all_res_uprns']) / 
+#                                        df['num_meters_gas']) * 100
     
-    df['gas_EUI_H'] = df['total_gas'] / df['clean_res_total_fl_area_H_total']
-    df['elec_EUI_H'] = df['total_elec'] / df['clean_res_total_fl_area_H_total']
+#     df['gas_EUI_H'] = df['total_gas'] / df['clean_res_total_fl_area_H_total']
+#     df['elec_EUI_H'] = df['total_elec'] / df['clean_res_total_fl_area_H_total']
 
-    df['all_res_total_fl_area_H_total'] = df['clean_res_total_fl_area_H_total'] + df['outb_res_total_fl_area_H_total'] + df['unknown_res_total_fl_area_H_total']
-    df['all_res_total_fl_area_FC_total'] = df['clean_res_total_fl_area_FC_total'] + df['outb_res_total_fl_area_FC_total'] + df['unknown_res_total_fl_area_FC_total']
+#     df['all_res_total_fl_area_H_total'] = df['clean_res_total_fl_area_H_total'] + df['outb_res_total_fl_area_H_total'] + df['unknown_res_total_fl_area_H_total']
+#     df['all_res_total_fl_area_FC_total'] = df['clean_res_total_fl_area_FC_total'] + df['outb_res_total_fl_area_FC_total'] + df['unknown_res_total_fl_area_FC_total']
     
-    df = round_cols(df, ['outb_res_total_fl_area_H_total', 'clean_res_total_fl_area_H_total', 'clean_res_premise_area_total', 'perc_clean_res', 'perc_cl_res_basement', 'perc_all_res_listed', 'perc_unknown_res'])
-    df = calculate_floor_area_confidence(df, 'clean_res_total_fl_area_H_total', 'clean_res_total_fl_area_FC_total')
-    return df
+#     df = round_cols(df, ['outb_res_total_fl_area_H_total', 'clean_res_total_fl_area_H_total', 'clean_res_premise_area_total', 'perc_clean_res', 'perc_cl_res_basement', 'perc_all_res_listed', 'perc_unknown_res'])
+#     df = calculate_floor_area_confidence(df, 'clean_res_total_fl_area_H_total', 'clean_res_total_fl_area_FC_total')
+    
+#     cols = ['clean_res_total_buildings', 'outb_res_total_buildings', 'unknown_res_total_buildings', 'comm_alltypes_count', 'mixed_alltypes_count' , 'unknown_alltypes_count']
+
+#     df['derived_unknown_res'] = df['all_types_total_buildings'].fillna(0) - df[cols].fillna(0).sum(axis=1)
+#     df['der_all_res_types'] = df['clean_res_total_buildings'] + df['outb_res_total_buildings'] + df['unknown_res_total_buildings']+ df['derived_unknown_res']
+#     df['percent_residential'] = df['der_all_res_types'] / df['all_types_total_buildings'] * 100
+
+#     return df
 
 # def deal_unknown_res(data):
 #     """
@@ -167,7 +166,6 @@ def call_post_process_fuel(intermed_dir, output_dir):
     df = post_proc_new_fuel(df)
 
     test_data(df)   
-
     return df 
 
 
@@ -332,7 +330,7 @@ def apply_filters(data, UPRN_THRESHOLD=40):
     filters = {
         'total_gas' : lambda x: x['total_gas'] > 0,
         'total_elec': lambda x: x['total_elec'] > 0,
-        'residential_filter': lambda x: x['percent_residential'] == 1,
+        'residential_filter': lambda x: x['percent_residential'] == 100,
         'gas_meters_filter': lambda x: x['diff_gas_meters_uprns_res'] <= UPRN_THRESHOLD,
         'gas_usage_range': lambda x: (x['gas_EUI_H'] <= 500) & (x['gas_EUI_H'] > 5),
         'electricity_usage': lambda x: x['elec_EUI_H'] <= 150,
@@ -342,13 +340,7 @@ def apply_filters(data, UPRN_THRESHOLD=40):
         'premise_area_total_fl_area': lambda x: x['clean_res_total_fl_area_H_total'] >= x['clean_res_premise_area_total'],
         'outb_res_total_fl_area_total': lambda x: x['clean_res_total_fl_area_H_total'] >= x['outb_res_total_fl_area_H_total'],
     }
-    # check premise area filter not more than 10
-    # if data[data['clean_res_total_fl_area_total'] < data['clean_res_premise_area_total']].shape[0] > 100:
-    #     raise Exception('More than 100 rows have gross area less than premise area (gross = total build ,premise = footprint)')
-
-    # if data[data['clean_res_total_fl_area_total'] < data['outb_res_total_fl_area_total']].shape[0] > 100:
-    #     raise Exception('More than 100 rows have more outbuildings fl area than res')
-
+ 
       
     # Apply all filters at once using numpy's logical AND
     mask = pd.Series(True, index=data.index)

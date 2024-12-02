@@ -262,6 +262,7 @@ def print_validation_summary(variation_results: Dict,
         for attr, result in batch_results.items():
             if attr != 'valid' and not result.get('valid', True):
                 print(f"- {attr}: Invalid regions:", ', '.join(result.get('invalid_regions', [])))
+                print('erorrs: ', result.get('anomaly_details', []))
     
     # Consistency Check
     print("\n3. Log Consistency Check:")

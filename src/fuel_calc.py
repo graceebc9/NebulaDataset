@@ -73,7 +73,7 @@ def process_buildings(df: Optional[pd.DataFrame]) -> Dict:
             **generate_nulls(COLS_OB, 'all_types_'),
             'mixed_alltypes_count': np.nan,
             'comm_alltypes_count': np.nan,
-            'unknown_alltypes': np.nan
+            'unknown_alltypes_count': np.nan
         }
     
     masks = {
