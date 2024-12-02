@@ -9,7 +9,7 @@ import numpy as np
 from typing import Dict, Optional, List
 
 # Configuration constants
-COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'total_fl_area_valfc', 'total_fl_area_meta', 'total_fl_area_avg',
+COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC',
  'base_floor', 'basement_heated_vol', 'listed_bool', 'uprn_count']
 
 COLS_OB = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'uprn_count']
@@ -56,7 +56,7 @@ def calc_df_sum_attribute(df: pd.DataFrame, cols: List[str], prefix: str = '') -
     }
     
     # Add null counts for specific columns directly in the calculation
-    area_cols = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'total_fl_area_valfc', 'total_fl_area_meta', 'total_fl_area_avg']
+    area_cols = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC']
     for col in cols:
         if col in area_cols:
             result[f'{prefix}{col}_null_count'] = df[col].isna().sum()

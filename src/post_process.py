@@ -335,7 +335,7 @@ def apply_filters(data, UPRN_THRESHOLD=40):
         'gas_usage_range': lambda x: (x['gas_EUI_H'] <= 500) & (x['gas_EUI_H'] > 5),
         'electricity_usage': lambda x: x['elec_EUI_H'] <= 150,
         'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
-        'heated_volume_range': lambda x: (x['all_res_total_fl_area_H_total'].between(50, 200000)),
+        'heated_volume_range': lambda x: (x['all_res_total_fl_area_H_total'].between(50, 20000)),
         'unknown_residential_types' : lambda x: x['perc_unknown_res'] <= 25,
         'premise_area_total_fl_area': lambda x: x['clean_res_total_fl_area_H_total'] >= x['clean_res_premise_area_total'],
         'outb_res_total_fl_area_total': lambda x: x['clean_res_total_fl_area_H_total'] >= x['outb_res_total_fl_area_H_total'],

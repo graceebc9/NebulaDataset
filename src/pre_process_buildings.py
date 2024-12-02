@@ -32,6 +32,8 @@ logger = get_logger(__name__)
 BASEMENT_HEIGHT = 2.4
 BASEMENT_PERCENTAGE_OF_PREMISE_AREA = 1
 DEFAULT_FLOOR_HEIGHT = 2.3
+
+# changed function to allow flexible but these are the defaults
 # MAX_THRESHOLD_FLOOR_HEIGHT = 5.3
 # MIN_THRESH_FL_HEIGHT = 2.2
 

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict
 from src.confidence_floor_area import calculate_floor_area_confidence 
+
 def process_residential_counts(df: pd.DataFrame) -> pd.DataFrame:
     """
     Process all residential building counts including direct and derived counts.
@@ -17,8 +18,11 @@ def process_residential_counts(df: pd.DataFrame) -> pd.DataFrame:
     extended_cols = building_cols + [
         'comm_alltypes_count',
         'mixed_alltypes_count',
-        'unknown_alltypes'
+        'unknown_alltypes_count'
     ]
+    # check all cols are there 
+    if not all([x in df.columns for x in extended_cols]):
+        raise ValueError(f"Missing columns in DataFrame: {extended_cols}")
     
     # Fill NaNs where at least one value exists
     mask = df[extended_cols + ['all_types_total_buildings']].notna().any(axis=1)
@@ -144,7 +148,7 @@ def post_proc_new_fuel(df: pd.DataFrame) -> pd.DataFrame:
     Orchestrates the sequence of data processing steps.
     """
     # Process steps in logical order
-    print(df.columns.tolist() )
+    # print(df.columns.tolist() )
     df = process_outbuildings_and_unknown(df)
     df = process_residential_counts(df)  # Now handles all residential counting in one place
     df = calculate_percentages(df)
