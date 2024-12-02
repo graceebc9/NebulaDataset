@@ -95,9 +95,9 @@ def test_data(df):
         raise Exception('Duplicated postcodes found')
     logger.info('Tests passed')
 
-def validate_vol_per_uprn(df):
-    excl = df[(df['max_vol_per_uprn'] < 100) & (df['diff_gas_meters_uprns_res'] > 6)]
-    return df[~df.index.isin(excl.index)]
+# def validate_vol_per_uprn(df):
+#     excl = df[(df['max_vol_per_uprn'] < 100) & (df['diff_gas_meters_uprns_res'] > 6)]
+#     return df[~df.index.isin(excl.index)]
 
 # def post_proc_new_fuel(df):
     
@@ -336,7 +336,7 @@ def apply_filters(data, UPRN_THRESHOLD=40):
         'electricity_usage': lambda x: x['elec_EUI_H'] <= 150,
         'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
         'heated_volume_range': lambda x: (x['all_res_total_fl_area_H_total'].between(50, 200000)),
-        'unknown_residential_types' : lambda x: x['perc_unknown_res'] <= 10,
+        'unknown_residential_types' : lambda x: x['perc_unknown_res'] <= 25,
         'premise_area_total_fl_area': lambda x: x['clean_res_total_fl_area_H_total'] >= x['clean_res_premise_area_total'],
         'outb_res_total_fl_area_total': lambda x: x['clean_res_total_fl_area_H_total'] >= x['outb_res_total_fl_area_H_total'],
     }
