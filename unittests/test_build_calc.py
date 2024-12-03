@@ -123,5 +123,99 @@ class TestBuildingProcessing(unittest.TestCase):
             process_buildings(df)
         self.assertIn("Unexpected residential types", str(context.exception))
 
+
+
+import unittest
+import pandas as pd
+import numpy as np
+from typing import List, Dict
+
+def generate_nulls(cols: List[str], prefix: str = '') -> Dict:
+    """Helper function to generate null results for empty DataFrame"""
+    return {
+        f'{prefix}total_buildings': 0,
+        **{f'{prefix}{col}_total': None for col in cols}
+    }
+
+
+
+class TestCalcDfSumAttribute(unittest.TestCase):
+
+    def test_dataframe_with_nulls(self):
+        """Test handling of DataFrame with null values"""
+        data = {
+            'premise_area': [100.0, None, 300.0, None],
+            'total_fl_area_H': [200.0, 400.0, np.nan, None],
+            'other_col': [1.0, 2.0, None, 4.0]
+        }
+        df = pd.DataFrame(data)
+        cols = ['premise_area', 'total_fl_area_H', 'other_col']
+        
+        result = calc_df_sum_attribute(df, cols)
+        
+        self.assertEqual(result['total_buildings'], 4)
+        self.assertEqual(result['premise_area_total'], 400.0)
+        self.assertEqual(result['premise_area_null_count'], 2)
+        self.assertEqual(result['total_fl_area_H_total'], 600.0)
+        self.assertEqual(result['total_fl_area_H_null_count'], 2)
+        self.assertEqual(result['other_col_total'], 7.0)
+        self.assertNotIn('other_col_null_count', result)
+
+    def test_prefix_handling(self):
+        """Test handling of prefix parameter"""
+        data = {
+            'premise_area': [100.0, None, 300.0],
+            'total_fl_area_H': [200.0, 400.0, None]
+        }
+        df = pd.DataFrame(data)
+        cols = ['premise_area', 'total_fl_area_H']
+        prefix = 'test_'
+        
+        result = calc_df_sum_attribute(df, cols, prefix)
+        
+        self.assertEqual(result['test_total_buildings'], 3)
+        self.assertEqual(result['test_premise_area_total'], 400.0)
+        self.assertEqual(result['test_premise_area_null_count'], 1)
+        self.assertEqual(result['test_total_fl_area_H_total'], 600.0)
+        self.assertEqual(result['test_total_fl_area_H_null_count'], 1)
+
+    def test_all_nulls(self):
+        """Test handling of columns with all null values"""
+        data = {
+            'premise_area': [None, None, None],
+            'total_fl_area_H': [None, None, None]
+        }
+        df = pd.DataFrame(data)
+        cols = ['premise_area', 'total_fl_area_H']
+        
+        result = calc_df_sum_attribute(df, cols)
+        
+        self.assertEqual(result['total_buildings'], 3)
+        self.assertTrue(pd.isna(result['premise_area_total']))
+        self.assertEqual(result['premise_area_null_count'], 3)
+        self.assertTrue(pd.isna(result['total_fl_area_H_total']))
+        self.assertEqual(result['total_fl_area_H_null_count'], 3)
+
+    def test_mixed_column_types(self):
+        """Test handling of mixed normal and area columns"""
+        data = {
+            'premise_area': [100.0, None, 300.0],
+            'non_area_col': [1.0, 2.0, 3.0],
+            'total_fl_area_H': [200.0, 400.0, None]
+        }
+        df = pd.DataFrame(data)
+        cols = ['premise_area', 'non_area_col', 'total_fl_area_H']
+        
+        result = calc_df_sum_attribute(df, cols)
+        
+        self.assertEqual(result['total_buildings'], 3)
+        self.assertEqual(result['premise_area_total'], 400.0)
+        self.assertEqual(result['premise_area_null_count'], 1)
+        self.assertEqual(result['non_area_col_total'], 6.0)
+        self.assertNotIn('non_area_col_null_count', result)
+        self.assertEqual(result['total_fl_area_H_total'], 600.0)
+        self.assertEqual(result['total_fl_area_H_null_count'], 1)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -18,7 +18,7 @@ def process_residential_counts(df: pd.DataFrame) -> pd.DataFrame:
     extended_cols = building_cols + [
         'comm_alltypes_count',
         'mixed_alltypes_count',
-        'unknown_alltypes_count'
+        'unknown_alltypes'
     ]
     # check all cols are there 
     if not all([x in df.columns for x in extended_cols]):
