@@ -19,10 +19,12 @@ final_dataset/NEBULA_data_filtered.csv: filtered to wholly residential and appli
 {fuel/type/age}_log_file.csv: details the count of postcodes for each region/batch combo for themes. If runnning for subset of dataset can check here to see counts align with batch size. If counts are missing, re-run stage 1
 
 
+Copyright (c) 2024 Grace Colverd
+This work is licensed under CC BY-NC-SA 4.0
+To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
 
-Author: Grace Colverd
-Created: 06/2024
-Modified: 11/2024
+For commercial licensing options, contact: gb669@cam.ac.uk
+
 """
 
 #########################################   Data paths SOME TO BE UPDATED   ########################################################################### 
@@ -183,6 +185,7 @@ def main():
         res_df = apply_filters(data , UPRN_THRESHOLD = UPRN_TO_GAS_THRESHOLD)
 
         data.to_csv(os.path.join(OUTPUT_DIR, 'NEBULA_englandwales_unfiltered.csv') ) 
+        data[(data['percent_residential']==100) & (data['total_gas']>0)].to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_unfiltered.csv"))
         res_df.to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_filtered.csv"))
         logger.info(f"Nebual Datasets saved to {os.path.join(OUTPUT_DIR, 'final_data')}" ) 
     logger.info("Data processing pipeline completed")

@@ -5,6 +5,7 @@
 This repository contains scripts for generating the NEBULA dataset, a postcode-level dataset for neighbourhood energy modelling. 
 
 
+
 ![NEBULA Pipeline](./images/nebula_pipeline.svg)
 
 
@@ -84,7 +85,15 @@ generate_building_stock.py   # HPC python wrapper
 nebula_job.sh                # If running on HPC - bash script to submit multiple batches 
 submit_nebula.sh            # If running on HPC - slurm submit for single batch 
 
+create_global_averages.py  #Script for generating the global averages table. We include the 2022 global averages in intermediate data. Script provded for reference.  
 ```
+
+## License
+© 2024 Grace Colverd
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+For commercial use, please contact: gb669@cam.ac.uk.
 
 ## Usage
 
@@ -117,7 +126,7 @@ The pipeline generates postcode-level statistics including:
 ## Notes
 - We batch up the process of converting the building stock dataset into postcode attributes (themes: building stock, typoloy and age). This enables better logging and multi threading. Current set up is to process each region seperartely and split into batches of 10k postcodes. 
 - We provide two generation routes: local and HPC genreation. For one region: running locally takes an estimated 48 hours. Multi threading can speed this up.
-- When running on HPC, we submit each type / region / batch as a seperate job. Using a 8GB (3 CPUS) job, each 10k batch takes approx. 1.5 hours for fuel and 1 for age/tpye. Total run time: (152 * 1.5) + (2 * 152 * 1)  = 532 hours. 
+- When running on HPC, we submit each type / region / batch as a seperate job. Using a 8GB (3 CPUS) job, each 10k batch takes approx. 1.5 hours for fuel and 20 minutes for age/tpye. Total run time: (152 * 1.5) + (2 * 152 * .3)  = 319 hours. 
 - Check overlapping_pcs.txt for postcode boundary issues
 - See global_avs/ for reference statistics
 - Intermediate files can be safely deleted after final dataset generation
