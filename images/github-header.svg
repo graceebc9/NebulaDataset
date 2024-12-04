@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320">
+  <!-- Background -->
+  <rect width="1280" height="320" fill="#000033"/>
+  
+  <!-- Main Title -->
+  <text x="100" y="100" font-family="Arial, sans-serif" font-size="80" fill="#00F5D4" font-weight="bold">
+    NEBULA
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="100" y="150" font-family="Arial, sans-serif" font-size="32" fill="#CCCCCC" >
+    A dataset of
+  </text>
+  
+  <!-- Acronym line with mixed colors -->
+  <text x="100" y="200" font-family="Arial, sans-serif" font-size="32">
+    <tspan fill="#00F5D4">N</tspan>
+    <tspan fill="#CCCCCC">eighbourhood </tspan>
+    <tspan fill="#00F5D4">E</tspan>
+    <tspan fill="#CCCCCC">nergy, </tspan>
+    <tspan fill="#00F5D4">B</tspan>
+    <tspan fill="#CCCCCC">uildings and </tspan>
+    <tspan fill="#00F5D4">U</tspan>
+    <tspan fill="#CCCCCC">rban </tspan>
+    <tspan fill="#00F5D4">LA</tspan>
+    <tspan fill="#CCCCCC">ndscapes</tspan>
+  </text>
+  
+  <!-- Creator line -->
+  <text x="100" y="250" font-family="Arial, sans-serif" font-size="24" fill="#CCCCCC">
+    Created by Grace Colverd
+  </text>
+  
+  <!-- Version and License - separated -->
+  <text x="100" y="280" font-family="Arial, sans-serif" font-size="20" fill="#CCCCCC">
+    V1.0
+  </text>
+  <text x="1000" y="280" font-family="Arial, sans-serif" font-size="20" fill="#CCCCCC">
+    CC BY-NC-SA
+  </text>
+</svg>
