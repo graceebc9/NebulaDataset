@@ -1,4 +1,4 @@
-![NEBULA Pipeline](./images/github_header.svg)
+![NEBULA Pipeline](./images/github-header.svg)
 
 # NEBULA Dataset Generation
 

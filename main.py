@@ -23,8 +23,7 @@ Copyright (c) 2024 Grace Colverd
 This work is licensed under CC BY-NC-SA 4.0
 To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
 
-For commercial licensing options, contact: gb669@cam.ac.uk
-
+For commercial licensing options, contact: gb669@cam.ac.uk. 
 """
 
 #########################################   Data paths SOME TO BE UPDATED   ########################################################################### 
@@ -183,10 +182,9 @@ def main():
     if STAGE3_post_process_data:
         data = unify_dataset(location_input_data_folder)
         res_df = apply_filters(data , UPRN_THRESHOLD = UPRN_TO_GAS_THRESHOLD)
-
-        data.to_csv(os.path.join(OUTPUT_DIR, 'NEBULA_englandwales_unfiltered.csv') ) 
-        data[(data['percent_residential']==100) & (data['total_gas']>0)].to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_unfiltered.csv"))
-        res_df.to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_filtered.csv"))
+        data.to_csv(os.path.join(OUTPUT_DIR, 'NEBULA_englandwales_unfiltered.csv') , index=False) 
+        data[(data['percent_residential']==100) & (data['total_gas']>0)].to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_unfiltered.csv"), index=False)
+        res_df.to_csv(os.path.join(OUTPUT_DIR, "NEBULA_englandwales_domestic_filtered.csv"), index=False)
         logger.info(f"Nebual Datasets saved to {os.path.join(OUTPUT_DIR, 'final_data')}" ) 
     logger.info("Data processing pipeline completed")
 
