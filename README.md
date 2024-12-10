@@ -4,6 +4,9 @@
 
 This repository contains scripts for generating the NEBULA dataset, a postcode-level dataset for neighbourhood energy modelling. 
 
+- A conference paper introducing this dataset - [Climate change AI Link](https://s3.us-east-1.amazonaws.com/climate-change-ai/papers/neurips2024/23/paper.pdf) 
+- Work that uses this dataset [Build Sys Benchmarking paper](https://dl.acm.org/doi/proceedings/10.1145/3671127?tocHeading=heading1)
+- Data Descriptor Paper - coming soon. 
 
 
 ![NEBULA Pipeline](./images/nebula_pipeline.svg)
@@ -31,8 +34,10 @@ conda install conda-forge::libgdal==3.6.4
 - Building Stock Data (Verisk)
 - Postcode Shapefiles (Edina)
 
-#### Pre-Downloaded Data (Open Government License)
-Place these files in the `input_data_sources` directory:
+Conversations with OS indicated postcodes shapefiles are open access data but we reccomned user download them themselves from accredited sources. 
+
+#### Provided Data (Open Government License)
+Place these files in the `input_data_sources` directory, or download from our Zip:
 
 1. Gas and Electricity Data (DESNZ, 2022)
 2. ONS UPRN to Postcode Mapping (2022)
@@ -40,7 +45,7 @@ Place these files in the `input_data_sources` directory:
 4. Census 2021 Statistics
 5. Census 2021 Postcode-Output Area-Region Mappings
 6. Output Areas 2011-2021 Mapping
-7. Postcode Areas
+7. Postcode Areas: area of postcodes (dervied from postcode shapefiles)
 8. Climate Data (HAD-UK Monthly Temperature, 2022)
 
 ## Directory Structure
@@ -91,9 +96,11 @@ create_global_averages.py  #Script for generating the global averages table. We 
 ## License
 © 2024 Grace Colverd
 
-This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
+This code is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
 
 For commercial use, please contact: gb669@cam.ac.uk.
+
+The processed dataset is available under an open licence - please see the accompanying paper for details. 
 
 ## Usage
 
