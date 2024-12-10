@@ -1,41 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320">
+<svg viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
-  <rect width="1280" height="320" fill="#000033"/>
+  <rect width="800" height="250" fill="#0a192f"/>
   
-  <!-- Main Title -->
-  <text x="100" y="100" font-family="Arial, sans-serif" font-size="80" fill="#00F5D4" font-weight="bold">
-    NEBULA
-  </text>
+  <!-- Title Text -->
+  <text x="50" y="80" font-size="48" font-weight="bold" fill="#64ffda">The NEBULA Dataset</text>
   
   <!-- Subtitle -->
-  <text x="100" y="150" font-family="Arial, sans-serif" font-size="32" fill="#CCCCCC" >
-    A dataset of
-  </text>
+  <text x="50" y="130" font-size="24" fill="#8892b0">A dataset of </text>
+  <text x="175" y="130" font-size="24" fill="#64ffda" font-weight="bold">N</text>
+  <text x="195" y="130" font-size="24" fill="#8892b0">eighbourhood </text>
+  <text x="350" y="130" font-size="24" fill="#64ffda" font-weight="bold">E</text>
+  <text x="365" y="130" font-size="24" fill="#8892b0">nergy, </text>
+  <text x="435" y="130" font-size="24" fill="#64ffda" font-weight="bold">B</text>
+  <text x="450" y="130" font-size="24" fill="#8892b0">uildings, and </text>
+  <text x="585" y="130" font-size="24" fill="#64ffda" font-weight="bold">U</text>
+  <text x="605" y="130" font-size="24" fill="#8892b0">rban </text>
+  <text x="670" y="130" font-size="24" fill="#64ffda" font-weight="bold">L</text>
+  <text x="685" y="130" font-size="24" fill="#8892b0">andscapes</text>
   
-  <!-- Acronym line with mixed colors -->
-  <text x="100" y="200" font-family="Arial, sans-serif" font-size="32">
-    <tspan fill="#00F5D4">N</tspan>
-    <tspan fill="#CCCCCC">eighbourhood </tspan>
-    <tspan fill="#00F5D4">E</tspan>
-    <tspan fill="#CCCCCC">nergy, </tspan>
-    <tspan fill="#00F5D4">B</tspan>
-    <tspan fill="#CCCCCC">uildings and </tspan>
-    <tspan fill="#00F5D4">U</tspan>
-    <tspan fill="#CCCCCC">rban </tspan>
-    <tspan fill="#00F5D4">LA</tspan>
-    <tspan fill="#CCCCCC">ndscapes</tspan>
-  </text>
+  <!-- Author Info -->
+  <text x="50" y="180" font-size="18" fill="#ccd6f6">Created by Grace Colverd</text>
   
-  <!-- Creator line -->
-  <text x="100" y="250" font-family="Arial, sans-serif" font-size="24" fill="#CCCCCC">
-    Created by Grace Colverd
-  </text>
+  <!-- Badges -->
+  <rect x="50" y="200" width="90" height="24" rx="12" fill="#1a1f2e"/>
+  <text x="95" y="216" font-size="12" fill="#64ffda" text-anchor="middle">v1.0.0</text>
   
-  <!-- Version and License - separated -->
-  <text x="100" y="280" font-family="Arial, sans-serif" font-size="20" fill="#CCCCCC">
-    V1.0
-  </text>
-  <text x="1000" y="280" font-family="Arial, sans-serif" font-size="20" fill="#CCCCCC">
-    CC BY-NC-SA
-  </text>
+  <rect x="150" y="200" width="160" height="24" rx="12" fill="#1a1f2e"/>
+  <text x="230" y="216" font-size="12" fill="#64ffda" text-anchor="middle">CC BY-NC 4.0</text>
 </svg>
