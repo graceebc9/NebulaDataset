@@ -233,15 +233,22 @@ def final_clean(new_df):
     'pcd7',
     'pcd8',
     'pcds',
- 'all_res_total_fl_area_H_total',
- 'all_res_total_fl_area_FC_total',
+ 'derived_unknown_res',
+ 'dointr',
+ 'doterm',
+ 'usertype',
      ]
     new_df.drop(cols_to_drop, axis=1, inplace=True)
     cols_rename =  {'all_unknown_pct': 'all_unknown_typology_pct',
     'all_unknown': 'all_unknown_typology',
     'None_age': 'all_none_age',
     'None_age_pct': 'all_none_age_pct',
-    'unknown_alltypes': 'unknown_alltypes_count'
+    'unknown_alltypes': 'unknown_alltypes_count',
+ 'total_res_total_buildings': 'Welcom' , 
+ 'perc_clean_res': 'percentage_clean_res_buildings', 
+ 'perc_unknown_res': 'percentage_unknown_res_buildings',
+ 'perc_cl_res_basement' : 'percentage_clean_res_basement_builds',
+ 'perc_all_res_listed': 'percentage_all_res_listed_builds',
     }
     new_df.rename(columns=cols_rename, inplace=True)
     return new_df
@@ -279,7 +286,7 @@ def apply_filters(data, UPRN_THRESHOLD=40):
         'electricity_usage': lambda x: x['elec_EUI_H'] <= 150,
         'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
         'heated_volume_range': lambda x: (x['all_types_total_fl_area_H_total'].between(50, 20000)),
-        'unknown_residential_types' : lambda x: x['perc_unknown_res'] <= 25,
+        'unknown_residential_types' : lambda x: x['percentage_unknown_res_buildings'] <= 25,
         'premise_area_total_fl_area': lambda x: x['clean_res_total_fl_area_H_total'] >= x['clean_res_premise_area_total'],
         'outb_res_total_fl_area_total': lambda x: x['clean_res_total_fl_area_H_total'] >= x['outb_res_total_fl_area_H_total'],
     }
