@@ -95,65 +95,6 @@ def test_data(df):
         raise Exception('Duplicated postcodes found')
     logger.info('Tests passed')
 
-# def validate_vol_per_uprn(df):
-#     excl = df[(df['max_vol_per_uprn'] < 100) & (df['diff_gas_meters_uprns_res'] > 6)]
-#     return df[~df.index.isin(excl.index)]
-
-# def post_proc_new_fuel(df):
-    
-#     # print(df.columns.tolist() )
-#     ob_cols = [x for x in df.columns if x.startswith('outb')]
-#     unknown_cols = [x for x in df.columns if x.startswith('unknown_res')]
-#     for col in ob_cols + unknown_cols:
-#         df[col] = df[col].fillna(0)
-#     df['outcode'] = df['postcode'].apply(lambda x: str(x).split(' ')[0])
-#     df['total_res_total_buildings'] = df['clean_res_total_buildings'].fillna(0) + df['unknown_res_total_buildings'].fillna(0) + df['outb_res_total_buildings'].fillna(0)
-#     # df['percent_residential'] = df['total_res_total_buildings'] / df['all_types_total_buildings']
-#     df['perc_clean_res'] = df['clean_res_total_buildings'] / df['all_types_total_buildings']
-#     df['perc_unknown_res'] = df['unknown_res_total_buildings'] / df['total_res_total_buildings'] * 100 
-#     df['perc_unknown_res'] = df['perc_unknown_res'].fillna(0)
-
-#     df['perc_cl_res_basement'] = df['clean_res_base_floor_total'] / df['all_types_total_buildings']
-#     df['perc_all_res_listed'] = (df['clean_res_listed_bool_total'] + df['unknown_res_listed_bool_total']) / df['all_types_total_buildings']
-#     df['all_res_uprns'] = df['clean_res_uprn_count_total'] + df['outb_res_uprn_count_total'] + df['unknown_res_uprn_count_total']    
-
-#     df['diff_gas_meters_uprns_res'] = (np.abs(df['num_meters_gas'] - df['all_res_uprns']) / 
-#                                        df['num_meters_gas']) * 100
-    
-#     df['gas_EUI_H'] = df['total_gas'] / df['clean_res_total_fl_area_H_total']
-#     df['elec_EUI_H'] = df['total_elec'] / df['clean_res_total_fl_area_H_total']
-
-#     df['all_res_total_fl_area_H_total'] = df['clean_res_total_fl_area_H_total'] + df['outb_res_total_fl_area_H_total'] + df['unknown_res_total_fl_area_H_total']
-#     df['all_res_total_fl_area_FC_total'] = df['clean_res_total_fl_area_FC_total'] + df['outb_res_total_fl_area_FC_total'] + df['unknown_res_total_fl_area_FC_total']
-    
-#     df = round_cols(df, ['outb_res_total_fl_area_H_total', 'clean_res_total_fl_area_H_total', 'clean_res_premise_area_total', 'perc_clean_res', 'perc_cl_res_basement', 'perc_all_res_listed', 'perc_unknown_res'])
-#     df = calculate_floor_area_confidence(df, 'clean_res_total_fl_area_H_total', 'clean_res_total_fl_area_FC_total')
-    
-#     cols = ['clean_res_total_buildings', 'outb_res_total_buildings', 'unknown_res_total_buildings', 'comm_alltypes_count', 'mixed_alltypes_count' , 'unknown_alltypes_count']
-
-#     df['derived_unknown_res'] = df['all_types_total_buildings'].fillna(0) - df[cols].fillna(0).sum(axis=1)
-#     df['der_all_res_types'] = df['clean_res_total_buildings'] + df['outb_res_total_buildings'] + df['unknown_res_total_buildings']+ df['derived_unknown_res']
-#     df['percent_residential'] = df['der_all_res_types'] / df['all_types_total_buildings'] * 100
-
-#     return df
-
-# def deal_unknown_res(data):
-#     """
-#     Remove those with more than threshold value of unknwon residentails builds
-#     remove those with more volume of outbiilding than res (should only be a few rows )
-#     """
-#     logger.info(f'Length of data before removing unknownd: {len(data)}')
-    
-#     # data= data[data['clean_res_total_fl_area_total'] > data['outb_res_total_fl_area_total'].fillna(0) ] 
-#     print(data[data['clean_res_total_fl_area_total'] < data['clean_res_premise_area_total']].shape[0] )
-    
-#     if data[data['clean_res_total_fl_area_total'] < data['clean_res_premise_area_total']].shape[0] < 10 :
-#         data= data[data['clean_res_total_fl_area_total'] >= data['clean_res_premise_area_total']]
-#     else:
-#         raise Exception('More than 10 rows have gross area less than premise area (gross = total build ,premise = footprint)')
-#     logger.info(f'Length of data after removing unknowns: {len(data)}')
-#     return data     
-
 
 def call_post_process_fuel(intermed_dir, output_dir):
     os.makedirs(os.path.join(output_dir, 'attribute_logs'), exist_ok=True)
@@ -292,13 +233,22 @@ def final_clean(new_df):
     'pcd7',
     'pcd8',
     'pcds',
+ 'derived_unknown_res',
+ 'dointr',
+ 'doterm',
+ 'usertype',
      ]
     new_df.drop(cols_to_drop, axis=1, inplace=True)
     cols_rename =  {'all_unknown_pct': 'all_unknown_typology_pct',
     'all_unknown': 'all_unknown_typology',
     'None_age': 'all_none_age',
     'None_age_pct': 'all_none_age_pct',
-    'unknown_alltypes': 'unknown_alltypes_count'
+    'unknown_alltypes': 'unknown_alltypes_count',
+ 'total_res_total_buildings': 'Welcom' , 
+ 'perc_clean_res': 'percentage_clean_res_buildings', 
+ 'perc_unknown_res': 'percentage_unknown_res_buildings',
+ 'perc_cl_res_basement' : 'percentage_clean_res_basement_builds',
+ 'perc_all_res_listed': 'percentage_all_res_listed_builds',
     }
     new_df.rename(columns=cols_rename, inplace=True)
     return new_df
@@ -335,8 +285,8 @@ def apply_filters(data, UPRN_THRESHOLD=40):
         'gas_usage_range': lambda x: (x['gas_EUI_H'] <= 500) & (x['gas_EUI_H'] > 5),
         'electricity_usage': lambda x: x['elec_EUI_H'] <= 150,
         'building_count_range': lambda x: (x['all_types_total_buildings'].between(1, 200)),
-        'heated_volume_range': lambda x: (x['all_res_total_fl_area_H_total'].between(50, 20000)),
-        'unknown_residential_types' : lambda x: x['perc_unknown_res'] <= 25,
+        'heated_volume_range': lambda x: (x['all_types_total_fl_area_H_total'].between(50, 20000)),
+        'unknown_residential_types' : lambda x: x['percentage_unknown_res_buildings'] <= 25,
         'premise_area_total_fl_area': lambda x: x['clean_res_total_fl_area_H_total'] >= x['clean_res_premise_area_total'],
         'outb_res_total_fl_area_total': lambda x: x['clean_res_total_fl_area_H_total'] >= x['outb_res_total_fl_area_H_total'],
     }

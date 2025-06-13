@@ -1,3 +1,11 @@
+"""
+Copyright (c) 2024 Grace Colverd
+This work is licensed under CC BY-NC-SA 4.0
+To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+For commercial licensing options, contact: gb669@cam.ac.uk
+""" 
+
 import os
 import logging
 from src.split_onsud_file import split_onsud_and_postcodes
