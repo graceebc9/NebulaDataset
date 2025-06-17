@@ -9,8 +9,8 @@ import numpy as np
 from typing import Dict, Optional, List
 
 # Configuration constants
-COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC',
- 'base_floor', 'basement_heated_vol', 'listed_bool', 'uprn_count']
+COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'total_fl_area_meta', 'scaled_fl_area', 
+ 'base_floor', 'basement_heated_vol', 'listed_bool', 'uprn_count' ]
 
 COLS_OB = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'uprn_count']
 RES_USE_TYPES = [
