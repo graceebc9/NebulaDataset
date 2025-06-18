@@ -336,7 +336,7 @@ def test_building_metrics(df):
     assert_larger(test, 'height', 'height_filled')
 
 
-def pre_process_building_data(build,   MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 2.9):
+def pre_process_building_data(build,   MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 5.1):
     # print(MIN_THRESH_FL_HEIGHT,MAX_THRESH_FL_HEIGHT )
     """Calculate and validate building metrics from verisk data."""
 
