@@ -33,7 +33,7 @@ def get_ratio(proc, epc):
 
     df['gross_epc'] = df['gross_area'] / df['TOTAL_FLOOR_AREA'] * 100 
     df['meta_res'] = df['total_fl_area_meta'] / df['TOTAL_FLOOR_AREA'] * 100
-    return df[['gross_epc', 'premise_age_bucketed','TOTAL_FLOOR_AREA', 'meta_res', 'uprn','gross_area' , 'total_fl_area_meta', 'total_fl_area_meta_source', 'epc_form', 'BUILT_FORM', 'TENURE', 'CONSTRUCTION_AGE_BAND', 'premise_age','premise_type', 'PROPERTY_TYPE']]
+    return df[['gross_epc', 'premise_age_bucketed','TOTAL_FLOOR_AREA', 'meta_res', 'PROPERTY_TYPE', 'uprn','gross_area' , 'total_fl_area_meta', 'total_fl_area_meta_source', 'epc_form', 'BUILT_FORM', 'TENURE', 'CONSTRUCTION_AGE_BAND', 'premise_age','premise_type', 'PROPERTY_TYPE']]
 
 def save_checkpoint(data, checkpoint_path, processed_count, total_count):
     """Save checkpoint with current progress"""
@@ -63,14 +63,14 @@ def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SH
     
     # Load existing checkpoint if available
     res, start_index = load_checkpoint(checkpoint_path)
-    print('Loading ONSUD')
+    
     onsud_path_base = os.path.join(location_input_data_folder, '')
     onsud_path = os.path.join(onsud_path_base, f'ONSUD_DEC_2022_{region_code}.csv')    
     onsud_data = load_onsud_data(onsud_path, PC_SHP_PATH)
     pc_list = onsud_data[0].PCDS.unique().tolist()
     lcds = onsud_data[0].LAD21CD.unique().tolist() 
     epcl = [] 
-    print('Loading epc')
+    
     for ld in lcds:
         f = os.path.join(epc_base_path, '*/', f'*{ld}*', 'certificates*' )
         file = glob.glob( f)
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     
     if hpc:
         epc_base_path = '/rds/user/gb669/hpc-work/energy_map/data/epc_database'
-        op_path = '/rds/user/gb669/hpc-work/energy_map/data/epc_database/gea_comparisons'
+        op_path = '/rds/user/gb669/hpc-work/energy_map/data/epc_database/gea_comparisons_all'
         os.makedirs(op_path, exist_ok=True)
         location_input_data_folder='/home/gb669/rds/hpc-work/energy_map/data/onsud_files/Data'
         
