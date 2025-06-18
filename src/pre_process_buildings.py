@@ -129,7 +129,7 @@ def update_outbuildings(test):
 
 
 
-def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT=2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
+def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESHOLD_FLOOR_HEIGHT):
     df['min_side'] = df['geometry'].astype(object).apply(min_side)
     df['threex_minside'] = [x * 3 for x in df['min_side']]
     
@@ -252,7 +252,7 @@ def create_basement_metrics(df):
     df['basement_heated_vol'] = df['base_floor'] *  df['premise_area'] * BASEMENT_HEIGHT * BASEMENT_PERCENTAGE_OF_PREMISE_AREA 
     return df 
 
-def pre_process_buildings(df, fc, scaling_table,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEIGHT= 5.3):
+def pre_process_buildings(df, fc, scaling_table,  MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 5.1):
     """ can only be applied   to a group where you want the local average within the group
     - bcuekts age (turns all pre into pre 1919
     - updat listed into numeric / encoded
@@ -266,7 +266,6 @@ def pre_process_buildings(df, fc, scaling_table,  MIN_THRESH_FL_HEIGHT = 2.3, MA
     Ends up with two diff ways of getting floor count, for heated volume :
          either directly (correct fc or local av fc) 
          or through height (either correct height, or local av hegith, converted to global fc for that height)
-         
     """ 
 
     df = create_age_buckets(df)
@@ -337,7 +336,7 @@ def test_building_metrics(df):
     assert_larger(test, 'height', 'height_filled')
 
 
-def pre_process_building_data(build,   MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEIGHT= 5.3):
+def pre_process_building_data(build,   MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 2.9):
     # print(MIN_THRESH_FL_HEIGHT,MAX_THRESH_FL_HEIGHT )
     """Calculate and validate building metrics from verisk data."""
 
