@@ -22,13 +22,17 @@ from src.postcode_utils import check_duplicate_primary_key, find_data_pc_joint
 import os
 import pandas as pd
 from tqdm import tqdm
+ 
 import pickle
+
 def get_ratio(proc, epc):
+ 
     dfm = proc[proc['uprn'].notna()]
     df = dfm.merge(epc, right_on='UPRN', left_on='uprn', how='inner')
 
     df['epc_form']= df['BUILT_FORM'].str.lower().str.replace('-', ' ')
 
+ 
     # match_houses= df[df.apply(lambda row: str(row['epc_form']) in str(row['premise_type']), axis=1) & (df['PROPERTY_TYPE']!='Flat')]
 
     df['gross_epc'] = df['gross_area'] / df['TOTAL_FLOOR_AREA'] * 100 
@@ -78,6 +82,7 @@ def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SH
         epcl.append(ep)
     
     epc = pd.concat(epcl, ignore_index=True)
+ 
     epc['INSPECTION_DATE'] = pd.to_datetime(epc['INSPECTION_DATE'])
 
     # Keep only the most recent record for each UPRN
@@ -92,6 +97,7 @@ def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SH
     
     with tqdm(total=total_postcodes, initial=start_index, desc="Processing PCs") as pbar:
         for i, pc in enumerate(pc_list_to_process, start=start_index):
+ 
             try:
                 uprn_match = find_data_pc_joint(pc, onsud_data, input_gpk=BUILDING_PATH)
                 proc = pre_process_building_data(uprn_match) 
@@ -117,6 +123,7 @@ def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SH
         os.remove(checkpoint_path)
         print("Processing completed. Checkpoint file removed.")
     
+ 
     return pd.concat(res, ignore_index=True)
 
     

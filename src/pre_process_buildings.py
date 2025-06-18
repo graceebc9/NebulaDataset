@@ -49,6 +49,13 @@ def load_avg_floor_count():
     
     return pd.read_csv(csv_path)
 
+def load_scaling_table():
+    """Load the GEA (from EPC) scaling table data from a CSV file."""
+    current_dir = os.path.dirname(__file__)
+    csv_path = os.path.join(current_dir, 'global_avs', 'scaling_factor_gea.csv')
+    df = pd.read_csv(csv_path)
+    return df
+
 
 def create_age_buckets(df):
     df['premise_age_bucketed'] = np.where(df['premise_age'].isin(['Pre 1837', '1837-1869', '1870-1918']), 'Pre 1919', df['premise_age'])
@@ -73,6 +80,21 @@ def create_height_bucket_cols(df, col):
 def update_listed_type(df):
     df.loc[:, 'listed_bool'] = df['listed_grade'].apply(lambda x: 1 if x is not None else 0)
     return df 
+
+
+# ============================================================
+# Scaling factrors
+# ============================================================
+
+def load_scaling_factor():
+    """Load the scaling factor data from a CSV file."""
+    current_dir = os.path.dirname(__file__)
+    # csv_path = os.path.join(current_dir, 'global_avs', 'scaling_factor.csv')
+    csv = '/Users/gracecolverd/NebulaDataset/notebooks/scaling_factor.csv'
+    df = pd.read_csv(csv) 
+    return df 
+
+ 
 
 # ============================================================
 # Geometry Fns
@@ -107,7 +129,7 @@ def update_outbuildings(test):
 
 
 
-def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT=2.3, MAX_THRESHOLD_FLOOR_HEIGHT=5.3):
+def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESHOLD_FLOOR_HEIGHT):
     df['min_side'] = df['geometry'].astype(object).apply(min_side)
     df['threex_minside'] = [x * 3 for x in df['min_side']]
     
@@ -182,7 +204,7 @@ def fill_glob_avs(df, fc = None  ):
 #     df ['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
 #     return df 
 
-def create_heated_vol(df):
+def create_heated_vol(df, scaling_table):
     """
     Calculate heated premise area metrics and create meta columns for analysis.
     Hierarchy: H (global average) → valfc (filled floor count) → FC (raw floor count)
@@ -192,7 +214,11 @@ def create_heated_vol(df):
     df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
     df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
     df['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
+    df = df.merge(scaling_table[['premise_type', 'premise_age_bucketed', 'scaling']], on=['premise_type', 'premise_age_bucketed'], how='left')
     
+    
+    df['scaling'] = df['scaling'].fillna(df.scaling.mean())
+
     # Create meta column with preferred hierarchy
     conditions = [
         df['total_fl_area_H'].notna(),
@@ -213,6 +239,7 @@ def create_heated_vol(df):
     columns = ['total_fl_area_H', 'total_fl_area_valfc', 'total_fl_area_FC']
     df['total_fl_area_avg'] = df[columns].mean(axis=1)
     
+    df['scaled_fl_area'] = df['total_fl_area_meta'] * df['scaling']
     return df
 
 def create_basement_metrics(df):
@@ -225,7 +252,7 @@ def create_basement_metrics(df):
     df['basement_heated_vol'] = df['base_floor'] *  df['premise_area'] * BASEMENT_HEIGHT * BASEMENT_PERCENTAGE_OF_PREMISE_AREA 
     return df 
 
-def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEIGHT= 5.3):
+def pre_process_buildings(df, fc, scaling_table,  MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 5.1):
     """ can only be applied   to a group where you want the local average within the group
     - bcuekts age (turns all pre into pre 1919
     - updat listed into numeric / encoded
@@ -239,7 +266,6 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
     Ends up with two diff ways of getting floor count, for heated volume :
          either directly (correct fc or local av fc) 
          or through height (either correct height, or local av hegith, converted to global fc for that height)
-         
     """ 
 
     df = create_age_buckets(df)
@@ -253,7 +279,7 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
     df=update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESH_FL_HEIGHT)
     df=fill_local_averages(df)
     df=fill_glob_avs(df, fc)
-    df = create_heated_vol(df)
+    df = create_heated_vol(df, scaling_table)
     df = create_basement_metrics(df)
     if df.empty:
         raise Exception('Error empty df ')
@@ -262,7 +288,6 @@ def pre_process_buildings(df, fc,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEI
 # ============================================================
 # Filter fns
 # ============================================================
-
 
 def produce_clean_building_data(df):
     """Filter and test building data."""
@@ -311,7 +336,7 @@ def test_building_metrics(df):
     assert_larger(test, 'height', 'height_filled')
 
 
-def pre_process_building_data(build,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_HEIGHT= 5.3):
+def pre_process_building_data(build,   MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 2.9):
     # print(MIN_THRESH_FL_HEIGHT,MAX_THRESH_FL_HEIGHT )
     """Calculate and validate building metrics from verisk data."""
 
@@ -320,8 +345,8 @@ def pre_process_building_data(build,  MIN_THRESH_FL_HEIGHT = 2.3, MAX_THRESH_FL_
     fc = load_avg_floor_count() 
     logger.debug('Loaded average floor count global averages ')
     
-   
-    processed_df = pre_process_buildings(build, fc , MIN_THRESH_FL_HEIGHT, MAX_THRESH_FL_HEIGHT)
+    scaling_table = load_scaling_table()
+    processed_df = pre_process_buildings(build, fc , scaling_table, MIN_THRESH_FL_HEIGHT, MAX_THRESH_FL_HEIGHT)
     
     clean_df = produce_clean_building_data(processed_df)
     
