@@ -175,9 +175,10 @@ conda install libtiff==4.5.0
 3. Global Averages for building floor count (derivation script is provided)
 4. Census 2021 Statistics files (downloaded in April 2024)
 5. Mapping from Postcodes to Output areas and regions (Census 2021)
-6. Mapping from output areas 2011 to Output Areas 2021 (used for Rural/Urban 2011 classification)
+6. Rural/ Urban lookup mapping for 2021
 7. Postcode areas: these were derived from ONS postcode shapefiles using the script generate_pc_area.py. You can replace with own. 
 8. Climate data: Monthly temperature data from HAD-UK, Downloaded from CEDA, (2022)
+ 
 
 
 
