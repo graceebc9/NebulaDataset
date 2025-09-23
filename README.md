@@ -63,7 +63,7 @@ input_data_sources/                   # Input data files
 │   └── oa_2011_2021/               # OA conversion lookup
 ├── ONS_UPRN_DATABASE/
 ├── postcode_areas/
-└── urban_rural_2011/
+└── urban_rural_2021/                 # Rural to Urban mapping UK GOV 2021
 
 batches/                         # Processing batch lists
 
