@@ -6,7 +6,9 @@
 This repository contains scripts for generating the NEBULA dataset, a postcode-level dataset for neighbourhood energy modelling. 
 
 - A conference paper introducing this dataset - [NeurIPS 2024 Climate Change AI](https://s3.us-east-1.amazonaws.com/climate-change-ai/papers/neurips2024/23/paper.pdf) 
-- Work that uses this dataset [BuildSys 2024 Benchmarking paper](https://dl.acm.org/doi/proceedings/10.1145/3671127?tocHeading=heading1)
+- Early benchmarking work that uses this dataset [BuildSys 2024 Benchmarking paper](https://dl.acm.org/doi/proceedings/10.1145/3671127?tocHeading=heading1)
+- Machine learning benchmarking for retrofit potential [Energy and Buildings paper](https://www.sciencedirect.com/science/article/pii/S0378778825011181?utm_campaign=STMJ_220042_AUTH_SERV_PA&utm_medium=email&utm_acid=274572075&SIS_ID=&dgcid=STMJ_220042_AUTH_SERV_PA&CMX_ID=&utm_in=DM596421&utm_source=AC_)
+
 - Data Descriptor Paper [Pre-Print](https://arxiv.org/abs/2501.09407). 
 
 
