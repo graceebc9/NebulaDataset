@@ -1,0 +1,14 @@
+geopandas==0.12.1
+shapely==1.8.5
+fiona==1.8.22
+cftime
+numpy== 1.23.5  
+pandas== 1.5.2
+scipy==1.9.3 
+xarray== 0.20.1 
+netCDF4 
+pyproj==3.4.0 
+rasterio==1.3.7
+pyogrio
+rtree==1.0.1
+rioxarray== 0.14.1 
