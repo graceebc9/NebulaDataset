@@ -104,6 +104,8 @@ def calculate_energy_metrics(df: pd.DataFrame) -> pd.DataFrame:
     
     df['gas_EUI_H'] = df['total_gas'].div(df['clean_res_total_fl_area_H_total'])
     df['elec_EUI_H'] = df['total_elec'].div(df['clean_res_total_fl_area_H_total'])
+    df['gas_eui_scaled_meta'] = df['total_gas'].div(df['clean_res_scaled_fl_area_total'])
+    df['gas_eui_scaled_avg'] = df['total_gas'].div(df['clean_res_scaled_fl_area_avg_total'])
     
     return df
 

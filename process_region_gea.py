@@ -59,7 +59,7 @@ def load_checkpoint(checkpoint_path):
         return checkpoint_data['results'], checkpoint_data['processed_count']
     return [], 0
 
-def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SHP_PATH, epc_base_path, checkpoint_interval=50):
+def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SHP_PATH, epc_base_path, checkpoint_interval=50, invert=False):
     print('Starting region', region_code)
     
     # Set up checkpoint file path
@@ -94,7 +94,9 @@ def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SH
     
     # Resume from checkpoint or start fresh
     pc_list_to_process = pc_list[start_index:]
-    
+    if invert==True:
+        print('starting inversion')
+        pc_list_to_process = pc_list_to_process.reverse()
     with tqdm(total=total_postcodes, initial=start_index, desc="Processing PCs") as pbar:
         for i, pc in enumerate(pc_list_to_process, start=start_index):
  
@@ -106,7 +108,9 @@ def process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SH
                 res.append(match_df)
                 
                 # Save checkpoint every checkpoint_interval postcodes
+                
                 if (i + 1) % checkpoint_interval == 0:
+                    print('saving checkpoint')
                     save_checkpoint(res, checkpoint_path, i + 1, total_postcodes)
                 
             except Exception as e:
@@ -142,6 +146,11 @@ if __name__ == "__main__":
         
         BUILDING_PATH='/home/gb669/rds/hpc-work/energy_map/data/building_files/UKBuildings_Edition_15_new_format_upn.gpkg'
         PC_SHP_PATH='/home/gb669/rds/hpc-work/energy_map/data/postcode_polygons/codepoint-poly_5267291'
+        invert_yn = os.getenv('INVERT_YN')
+        if invert_yn=='yes':
+            invert=True
+        elif invert_yn=='no':
+            invert=False 
     else:
         epc_base_path = '/Volumes/T9/2024_Data_downloads/2025_epc_database'
         op_path = '/Volumes/T9/01_2025_EPC_POSTCODES/gea_comparisons/esults'
@@ -152,6 +161,6 @@ if __name__ == "__main__":
         PC_SHP_PATH = '/Volumes/T9/2024_Data_downloads/codepoint_polygons_edina/Download_all_postcodes_2378998/codepoint-poly_5267291' 
     
 
-    result_df = process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SHP_PATH, epc_base_path)
+    result_df = process_region(region_code, location_input_data_folder, BUILDING_PATH, PC_SHP_PATH, epc_base_path, invert)
     output_path = os.path.join(op_path, f'processed_region_{region_code}.csv')
     result_df.to_csv(output_path, index=False)

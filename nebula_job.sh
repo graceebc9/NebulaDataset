@@ -3,9 +3,9 @@
 #SBATCH -p icelake
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --time=00:25:00
+#SBATCH --time=01:20:00
 #SBATCH --mail-type=NONE
-#SBATCH --mem=8G
+#SBATCH --mem=16G
 #SBATCH --output=logs/nebula_%A_%a.out
 #SBATCH --error=logs/nebula_%A_%a.err
 
@@ -38,9 +38,9 @@ export BUILDING_PATH='/rds/user/gb669/hpc-work/energy_map/data/building_files/UK
 export ONSUD_BASE='/home/gb669/rds/hpc-work/energy_map/data/onsud_files/Data'
 export GAS_PATH='/home/gb669/rds/hpc-work/energy_map/data/input_data_sources/energy_data/Postcode_level_gas_2022.csv'
 export ELEC_PATH='/home/gb669/rds/hpc-work/energy_map/data/input_data_sources/energy_data/Postcode_level_all_meters_electricity_2022.csv'
-export ENERGY='no'
-export AGE='yes'
-export TYPE='yes'
+export ENERGY='yes'
+export AGE='no'
+export TYPE='no'
 
 # Log job info
 echo "Job started at: $(date)"

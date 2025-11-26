@@ -9,10 +9,11 @@ import numpy as np
 from typing import Dict, Optional, List
 
 # Configuration constants
-COLS = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'total_fl_area_meta', 'scaled_fl_area', 
+COLS = ['premise_area', 'gross_area', 'area_est_global', 'area_est_raw', 'area_est_filled', 'area_mode', 'area_min', 'area_max', 'scaled_area_min', 'scaled_area_max', 'scaled_area_mode' ,  'area_uncertainty_score' ,
  'base_floor', 'basement_heated_vol', 'listed_bool', 'uprn_count' ]
 
-COLS_OB = ['premise_area', 'total_fl_area_H', 'total_fl_area_FC', 'uprn_count']
+COLS_OB = ['premise_area', 'area_mode', 'area_min', 'area_max', 'uprn_count']
+
 RES_USE_TYPES = [
     'Medium height flats 5-6 storeys', 'Small low terraces',
     '3-4 storey and smaller flats', 'Tall terraces 3-4 storeys',

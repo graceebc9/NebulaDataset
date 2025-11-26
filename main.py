@@ -52,7 +52,7 @@ OUTPUT_DIR = 'final_dataset'
 #########################################   Regions to run, YOU CAN UPDATE   ###################################################################### 
 
 # Run generation locally (True) or on HPC (False)
-running_locally = True 
+running_locally = False 
 
 # New environment checks
 running_locally = os.getenv('SLURM_ARRAY_TASK_ID') is None
@@ -64,7 +64,7 @@ batch_id = os.getenv('BATCH_ID')  # Only used in HPC mode
 STAGE0_split_onsud = False 
 STAGE1_generate_census = False 
 STAGE1_generate_climate = False 
-STAGE1_generate_buildings_energy= False
+STAGE1_generate_buildings_energy= True
 STAGE1_generate_building_age = False 
 STAGE1_generate_building_typology = False 
 STAGE3_post_process_data = True 
