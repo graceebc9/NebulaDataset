@@ -18,9 +18,9 @@ from src.postcode_utils import load_onsud_data, load_ids_from_file
 from src.fuel_proc import run_fuel_calc_main, load_fuel_data
 from src.age_perc_proc import run_age_calc
 from src.type_proc import run_type_calc
-# from src.orientation_proc import run_orient_calc
+# from src.orientation_proc import run_orient_cal
 import logging 
-
+from src.downscale_proc import run_downscale_calc_main 
 from src.logging_config import get_logger
 logger = get_logger(__name__)
 
@@ -133,3 +133,28 @@ def run_type_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_labe
     
     run_type_calc(batch_ids, onsud_data, INPUT_GPK, subbatch_size,
                   batch_label, log_file)
+
+
+# def run_retrofit_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_label,
+#                     log_file, gas_path=None, elec_path=None, overlap=None,
+#                     batch_dir=None, path_to_pcshp=None):
+#     """Process type data."""
+#     print(log_file)
+    
+#     run_retrofit_calc_with_uncertainty(batch_ids, onsud_data, INPUT_GPK, subbatch_size,
+#                   batch_label, log_file,   )
+
+
+
+def run_downscale_process(batch_ids, onsud_data, INPUT_GPK, subbatch_size, batch_label, 
+                    log_file, gas_path, elec_path, overlap, batch_dir, path_to_pcshp):
+        gas_df, elec_df = load_fuel_data(gas_path, elec_path)
+        
+        run_downscale_calc_main(
+        pcs_list = batch_ids, 
+        onsud_data= onsud_data, 
+        subbatch_size=subbatch_size,
+        INPUT_GPK=INPUT_GPK,
+        batch_label=batch_label,
+        log_file=log_file, gas_df=gas_df, elec_df=elec_df
+    )

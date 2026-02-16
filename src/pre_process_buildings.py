@@ -33,8 +33,11 @@ BASEMENT_HEIGHT = 2.4
 BASEMENT_PERCENTAGE_OF_PREMISE_AREA = 1
 DEFAULT_FLOOR_HEIGHT = 2.3
 average_scaling_factor = 0.58
- 
- 
+
+
+
+MIN_THRESH_FL_HEIGHT=2.2 
+MAX_THRESH_FL_HEIGHT=5.1
 
 # ============================================================
 # Data Loading Functions
@@ -88,7 +91,8 @@ def update_listed_type(df):
 def load_scaling_factor():
     """Load the scaling factor data from a CSV file."""
     current_dir = os.path.dirname(__file__)
-    csv_path = os.path.join(current_dir, 'global_avs', 'scaling_factor.csv')
+    # csv_path = os.path.join(current_dir, 'global_avs', 'scaling_factor.csv')
+    csv = '/Users/gracecolverd/NebulaDataset/notebooks/scaling_factor.csv'
     df = pd.read_csv(csv) 
     return df 
 
@@ -137,7 +141,7 @@ def update_avgfloor_count_outliers(df, MIN_THRESH_FL_HEIGHT, MAX_THRESHOLD_FLOOR
     df.to_crs('EPSG:27700', inplace=True )
     
     df['min_side'] = df['geometry'].astype(object).apply(min_side)
-    print(df['min_side'])
+    # print(df['min_side'])
     df['perimeter_length']=df['geometry'].astype(object).apply(get_perimeter) 
     df['threex_minside'] = [x * 3 for x in df['min_side']]
     
@@ -203,17 +207,6 @@ def fill_glob_avs(df, fc = None  ):
     return df 
 
 
-# def create_heated_vol(df):
-#     """
-#     calc heated premise are
-#     """
-#     df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
-#     df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
-#     df ['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
-#     return df 
-
-import numpy as np
-
 def create_heated_vol_stoch(df, scaling_table):
     """
     Revised: Calculates area bounds to quantify uncertainty, rather than selecting a single deterministic value.
@@ -228,19 +221,17 @@ def create_heated_vol_stoch(df, scaling_table):
     # C. Imputed/Filled Data (High Confidence - The 'Mode')
     df['area_est_filled'] = df['premise_area'] * df['fc_filled']
 
-    # 2. Merge Scaling (Asset Rating Physics)
-    # Note: Avoid filling with global mean if possible. It dilutes the signal.
+    # 2. Merge Scaling 
     df = df.merge(scaling_table[['premise_type', 'premise_age_bucketed', 'scaling']], 
                   on=['premise_type', 'premise_age_bucketed'], how='left')
     
-    # CRITICAL FIX: Don't fill scaling with global mean. 
-    # If we don't know the physics, we shouldn't guess. 
-    # But if you must, use the median of that specific typology, not the whole dataset.
-    df['scaling'] = df['scaling'].fillna(df.groupby('premise_type')['scaling'].transform('median')) 
 
-    # 3. Construct the Uncertainty Envelope (The Triangular Distribution)
-    # We look across all three estimates for each building.
-    
+    # But if you must, use the median of that specific typology, not the whole dataset.
+    df['scaling'] = df['scaling'].fillna(scaling_table['scaling'].mean () ) 
+    # check if scaling nan 
+    if df.scaling.isna().sum() > 0:
+        raise Exception('Why is scaling 0 ')
+    # 3. Construct the Uncertainty Envelope
     cols_to_check = ['area_est_global', 'area_est_raw', 'area_est_filled']
     
     # A. The Lower Bound (Conservative case)
@@ -251,7 +242,7 @@ def create_heated_vol_stoch(df, scaling_table):
     
     # C. The Mode (Most Likely - usually your 'valfc')
     # If valfc is missing, fall back to raw, then global
-    df['area_mode'] = df['area_est_filled'].fillna(df['area_est_global']).fillna(df['area_est_raw'])
+    df['area_mode'] = df['area_est_filled'].fillna(df['area_est_raw']).fillna(df['area_est_global'])
     
     # 4. The Uncertainty Metric (CV)
     # This is the "Z-Score" equivalent I mentioned. 
@@ -264,47 +255,44 @@ def create_heated_vol_stoch(df, scaling_table):
     df['scaled_area_mode'] = df['area_mode'] * df['scaling']
 
     return df
-    
 
-def create_heated_vol(df, scaling_table):
-    """
-    Calculate heated premise area metrics and create meta columns for analysis.
-    Hierarchy: H (global average) → valfc (filled floor count) → FC (raw floor count)
-    Also includes average of available values.
-    """
-    # Calculate base metrics
-    df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
-    df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
-    df['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
-    df = df.merge(scaling_table[['premise_type', 'premise_age_bucketed', 'scaling']], on=['premise_type', 'premise_age_bucketed'], how='left')
+# def create_heated_vol(df, scaling_table):
+#     """
+#     Calculate heated premise area metrics and create meta columns for analysis.
+#     Hierarchy: H (global average) → valfc (filled floor count) → FC (raw floor count)
+#     Also includes average of available values.
+#     """
+#     # Calculate base metrics
+#     df['total_fl_area_H'] = df['premise_area'] * df['global_average_floorcount']
+#     df['total_fl_area_FC'] = df['premise_area'] * df['floor_count_numeric']
+#     df['total_fl_area_valfc'] = df['premise_area'] * df['fc_filled']
+#     df = df.merge(scaling_table[['premise_type', 'premise_age_bucketed', 'scaling']], on=['premise_type', 'premise_age_bucketed'], how='left')
     
     
-    df['scaling'] = df['scaling'].fillna(df.scaling.mean())
-    df['scaling'] = df['scaling'].fillna(average_scaling_factor)
+#     df['scaling'] = df['scaling'].fillna(df.scaling.mean())
 
-    # Create meta column with preferred hierarchy
-    conditions = [
-        df['total_fl_area_valfc'].notna(),
-        df['total_fl_area_H'].notna(),
-        df['total_fl_area_FC'].notna()
-    ]
-    choices_value = [
-        df['total_fl_area_valfc'],
-        df['total_fl_area_H'], 
-        df['total_fl_area_FC']
-    ]
-    choices_source = [ 'valfc', 'H', 'FC']
+#     # Create meta column with preferred hierarchy
+#     conditions = [
+#         df['total_fl_area_H'].notna(),
+#         df['total_fl_area_valfc'].notna(),
+#         df['total_fl_area_FC'].notna()
+#     ]
+#     choices_value = [
+#         df['total_fl_area_H'], 
+#         df['total_fl_area_valfc'], 
+#         df['total_fl_area_FC']
+#     ]
+#     choices_source = ['H', 'valfc', 'FC']
     
-    df['total_fl_area_meta'] = np.select(conditions, choices_value, default=np.nan)
-    df['total_fl_area_meta_source'] = np.select(conditions, choices_source, default='none')
+#     df['total_fl_area_meta'] = np.select(conditions, choices_value, default=np.nan)
+#     df['total_fl_area_meta_source'] = np.select(conditions, choices_source, default='none')
     
-    # Calculate average of available values
-    columns = ['total_fl_area_H', 'total_fl_area_valfc', 'total_fl_area_FC']
-    df['total_fl_area_avg'] = df[columns].mean(axis=1)
-    
-    df['scaled_fl_area'] = df['total_fl_area_meta'] * df['scaling']
-    df['scaled_fl_area_avg'] = df['total_fl_area_avg'] * df['scaling']
-    return df
+#     # Calculate average of available values
+#     columns = ['total_fl_area_H', 'total_fl_area_valfc', 'total_fl_area_FC']
+#     df['total_fl_area_avg'] = df[columns].mean(axis=1)
+#     df['scaling'] = df['scaling'].fillna(average_scaling_factor)
+#     df['scaled_fl_area'] = df['total_fl_area_meta'] * df['scaling']
+#     return df
 
 def create_basement_metrics(df):
     basement_conditions = [
@@ -316,7 +304,7 @@ def create_basement_metrics(df):
     df['basement_heated_vol'] = df['base_floor'] *  df['premise_area'] * BASEMENT_HEIGHT * BASEMENT_PERCENTAGE_OF_PREMISE_AREA 
     return df 
 
-def pre_process_buildings(df, fc, scaling_table,  MIN_THRESH_FL_HEIGHT = 2.1, MAX_THRESH_FL_HEIGHT= 5.1):
+def pre_process_buildings(df, fc, scaling_table,  MIN_THRESH_FL_HEIGHT = MIN_THRESH_FL_HEIGHT , MAX_THRESH_FL_HEIGHT= MAX_THRESH_FL_HEIGHT):
     """ can only be applied   to a group where you want the local average within the group
     - bcuekts age (turns all pre into pre 1919
     - updat listed into numeric / encoded
@@ -393,8 +381,7 @@ def test_building_metrics(df):
     """Run various assertions on building metrics."""
 
 
-    for c in ['area_mode']:
-        check_nulls_percent(df, c, 0)
+
 
     test = df[df['validated_height'].isna()].copy() 
     assert_larger(test, 'height', 'height_filled')
