@@ -730,81 +730,52 @@ def plot_01_national_distributions(df, output_dir):
 
             os.path.join(output_dir, f'01_national_distribution_{safe}.csv'), index=False)
 
-
-
-
-
 def plot_02_spread_severity(df, output_dir):
-
-    """Stacked bar of spread severity — national and per region."""
-
+    """Stacked bar of spread severity — per region only."""
     valid = df[df['spread_pct'].notna()].copy()
-
     severity_order = ['Tight (<5%)', 'Low (5-15%)', 'Medium (15-30%)', 'High (30-60%)', 'Very High (>60%)']
-
     severity_colors = [STYLE['green'], STYLE['teal'], STYLE['amber'], STYLE['coral'], STYLE['red']]
 
-
-
-    nat_counts = valid['spread_severity'].value_counts().reindex(severity_order, fill_value=0)
-
-
-
-    fig, axes = plt.subplots(1, 2, figsize=(14, max(5, valid['_region'].nunique() * 0.3)),
-
-                             gridspec_kw={'width_ratios': [1, 2.5]})
-
-    fig.suptitle('Uncertainty Spread Severity', fontweight='bold', fontsize=14)
-
-
-
-    ax = axes[0]
-
-    ax.pie(nat_counts, labels=None, colors=severity_colors,
-
-           autopct=lambda p: f'{p:.0f}%' if p > 3 else '', startangle=90, textprops={'fontsize': 9})
-
-    ax.set_title('National', fontsize=11)
-
-    ax.legend(severity_order, loc='lower left', fontsize=8)
-
-
-
-    ax = axes[1]
-
     regional = valid.groupby(['_region', 'spread_severity']).size().unstack(fill_value=0)
-
     regional = regional.reindex(columns=severity_order, fill_value=0)
-
     regional_pct = regional.div(regional.sum(axis=1), axis=0) * 100
-
     regional_pct = regional_pct.sort_values('Very High (>60%)', ascending=True)
+
+    fig, ax = plt.subplots(figsize=(12, max(5, valid['_region'].nunique() * 0.5)))
 
     regional_pct.plot(kind='barh', stacked=True, ax=ax, color=severity_colors, edgecolor='none', width=0.7)
 
+    # Add white percentage labels inside each bar segment
+    for bar_group, col in zip(ax.containers, severity_order):
+        for bar in bar_group:
+            width = bar.get_width()
+            if width >= 5:  # only label if segment is wide enough to fit
+                x = bar.get_x() + width / 2
+                y = bar.get_y() + bar.get_height() / 2
+                ax.text(x, y, f'{width:.0f}%', ha='center', va='center',
+                        color='white', fontsize=7, fontweight='bold')
+
     ax.set_xlabel('Percentage of Postcodes')
-
-    ax.set_title('By Region', fontsize=11)
-
-    ax.legend(fontsize=7, loc='lower right')
-
-    ax.grid(True, alpha=0.3, axis='x')
-
-
+    ax.set_ylabel('Region')
+    ax.set_title('')
+    ax.set_facecolor('white')
+    fig.patch.set_facecolor('white')
+    ax.grid(True, alpha=0.3, axis='x', color='lightgrey')
+    ax.legend(
+        severity_order,
+        fontsize=8,
+        loc='upper left',
+        bbox_to_anchor=(1.01, 1),
+        borderaxespad=0,
+        frameon=False
+    )
 
     fig.tight_layout()
-
     save_fig(fig, output_dir, '02_spread_severity')
 
     csv_out = regional.copy()
-
     csv_out['total'] = csv_out.sum(axis=1)
-
     csv_out.to_csv(os.path.join(output_dir, '02_spread_severity.csv'))
-
-
-
-
 
 def plot_03_regional_comparison(regional_df, output_dir):
 
@@ -2370,17 +2341,22 @@ def plot_16_london_energy_diagnostics(df, output_dir):
     
     return summary_df
     
-    
+
+
 def plot_18_regional_boxplots_filtered(df, output_dir):
     """
     4 separate box plots per filtering level, one metric each.
+    - EUI plots capped at 300 on y-axis
     - Consistent y-axis scale across filters for the same metric
     - Colorbar showing the median value scale
-    - Grand median line with value label
+    - Grand median as dashed line with legend entry (no inline label)
     - Per-box median labels (white or black depending on box colour)
+    - Extra London-only plot: 4 bars removing severity levels progressively
     Saves to subfolders: 18_unfiltered/ and 18_excl_high_spread/
     No titles. Fliers excluded.
     """
+
+    EUI_CAP = 300  # hard y-axis cap for EUI metrics
 
     metrics = [
         ('avg_gas',       'Avg Gas per Meter (kWh)'),
@@ -2404,20 +2380,25 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
 
     # ------------------------------------------------------------------
     # Pre-compute consistent y-axis limits PER METRIC across both filters
-    # and global median value range for a shared colormap
+    # EUI metrics hard-capped at EUI_CAP
     # ------------------------------------------------------------------
-    y_limits   = {}   # col -> (ymin, ymax)
-    norm_limits = {}  # col -> (vmin, vmax) for colormap
+    y_limits    = {}
+    norm_limits = {}
 
     for col, _ in metrics:
         all_vals = df[col].dropna()
         if len(all_vals) == 0:
             continue
-        # y-axis: 0 to 98th-percentile of the unfiltered data so scale is fair
-        ymax = all_vals.quantile(0.98)
-        y_limits[col] = (0, ymax * 1.08)   # small headroom for labels
 
-        # colour range: min/max of regional medians across BOTH filter sets
+        is_eui = col.startswith('eui_')
+
+        if is_eui:
+            ymax = EUI_CAP
+        else:
+            ymax = all_vals.quantile(0.98)
+
+        y_limits[col] = (0, ymax * 1.08)
+
         all_medians = []
         for _, fdata, _ in filter_configs:
             for r in fdata['_region'].unique():
@@ -2435,18 +2416,18 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
         if 'avg_gas' in df.columns
         else sorted(df['_region'].unique())
     )
-    n_regions = len(region_order)
+    n_regions  = len(region_order)
     fig_width  = max(14, n_regions * 0.9)
-
-    cmap = plt.cm.RdYlBu_r
+    cmap       = plt.cm.RdYlBu_r
 
     def _label_colour(rgba):
-        """Return 'white' or 'black' depending on perceived brightness of rgba."""
         r, g, b, _ = rgba
-        # Standard luminance formula
         luminance = 0.299 * r + 0.587 * g + 0.114 * b
         return 'white' if luminance < 0.5 else 'black'
 
+    # ==================================================================
+    # MAIN LOOP: one plot per (filter_config × metric)
+    # ==================================================================
     for folder_name, data, suffix in filter_configs:
 
         out_dir = os.path.join(output_dir, folder_name)
@@ -2466,7 +2447,10 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
                 print(f"  Skipping {col} ({suffix}) — no data")
                 continue
 
-            # ── figure ────────────────────────────────────────────────
+            ymin_ax, ymax_ax = y_limits[col]
+            vmin, vmax       = norm_limits[col]
+            norm             = plt.Normalize(vmin=vmin, vmax=vmax)
+
             fig, ax = plt.subplots(figsize=(fig_width, 7))
             fig.patch.set_facecolor(STYLE['bg'])
             ax.set_facecolor(STYLE['card'])
@@ -2483,10 +2467,6 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
                 boxprops=dict(linewidth=1.2),
             )
 
-            # ── colour boxes using the SHARED norm for this metric ─────
-            vmin, vmax = norm_limits[col]
-            norm = plt.Normalize(vmin=vmin, vmax=vmax)
-
             medians = [d.median() if len(d) > 0 else np.nan for d in plot_data]
 
             for patch, med in zip(bp['boxes'], medians):
@@ -2496,45 +2476,39 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
                 patch.set_facecolor(rgba)
                 patch.set_alpha(0.85)
 
-            # ── grand median line ──────────────────────────────────────
-            all_vals = pd.concat(plot_data) if any(len(d) > 0 for d in plot_data) else pd.Series(dtype=float)
+            # ── grand median line → legend only, no inline text ───────
+            all_vals     = pd.concat([d for d in plot_data if len(d) > 0])
             grand_median = all_vals.median()
-            ymin_ax, ymax_ax = y_limits[col]
 
-            ax.axhline(
+            gm_line = ax.axhline(
                 grand_median,
                 color=STYLE['dark'],
-                linewidth=1.4,
+                linewidth=1.5,
                 linestyle='--',
-                alpha=0.75,
+                alpha=0.80,
                 zorder=3,
+                label=f'Overall median: {grand_median:,.0f}',
             )
-            ax.text(
-                n_regions + 0.55,
-                grand_median,
-                f'Overall median\n{grand_median:,.0f}',
-                va='center',
-                ha='left',
-                fontsize=8,
-                color=STYLE['dark'],
-                zorder=4,
+            ax.legend(
+                handles=[gm_line],
+                loc='upper right',
+                fontsize=9,
+                framealpha=0.85,
+                edgecolor='#E0DCD4',
+                facecolor=STYLE['card'],
             )
 
-            # ── per-box median label ───────────────────────────────────
+            # ── per-box median labels ──────────────────────────────────
             for i, (med, patch, d) in enumerate(zip(medians, bp['boxes'], plot_data)):
                 if np.isnan(med) or len(d) == 0:
                     continue
 
                 rgba      = cmap(norm(med))
                 txt_color = _label_colour(rgba)
-                x_pos     = i + 1
-
-                # position: just above the median line
-                # but cap so it doesn't escape the axes
-                label_y = min(med * 1.04, ymax_ax * 0.97)
+                label_y   = min(med * 1.04, ymax_ax * 0.97)
 
                 ax.text(
-                    x_pos,
+                    i + 1,
                     label_y,
                     f'{med:,.0f}',
                     ha='center',
@@ -2545,8 +2519,8 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
                     zorder=5,
                 )
 
-            # ── axes formatting ────────────────────────────────────────
-            ax.set_ylim(y_limits[col])
+            # ── axes ───────────────────────────────────────────────────
+            ax.set_ylim(ymin_ax, ymax_ax)
             ax.set_ylabel(ylabel, fontsize=12, color=STYLE['text'])
             ax.tick_params(axis='x', rotation=45, labelsize=9, colors=STYLE['muted'])
             ax.tick_params(axis='y', labelsize=9,  colors=STYLE['muted'])
@@ -2556,20 +2530,17 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
             for spine in ax.spines.values():
                 spine.set_edgecolor('#E0DCD4')
 
-            # ── n= annotations below boxes ────────────────────────────
+            # ── n= below boxes ─────────────────────────────────────────
             for i, d in enumerate(plot_data):
                 ax.text(
-                    i + 1,
-                    ymin_ax,
+                    i + 1, ymin_ax,
                     f'n={len(d):,}',
-                    ha='center',
-                    va='bottom',
-                    fontsize=6,
-                    color=STYLE['muted'],
+                    ha='center', va='bottom',
+                    fontsize=6, color=STYLE['muted'],
                 )
 
-            # ── colorbar ──────────────────────────────────────────────
-            sm  = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+            # ── colorbar ───────────────────────────────────────────────
+            sm   = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
             sm.set_array([])
             cbar = fig.colorbar(sm, ax=ax, shrink=0.6, pad=0.01, aspect=30)
             cbar.set_label(f'Median {ylabel}', fontsize=9, color=STYLE['text'])
@@ -2579,33 +2550,171 @@ def plot_18_regional_boxplots_filtered(df, output_dir):
             fig.tight_layout()
 
             fname = f'{col}_{suffix}'
-            fpath = os.path.join(out_dir, f'{fname}.png')
-            fig.savefig(fpath, dpi=150, bbox_inches='tight',
-                        facecolor=fig.get_facecolor())
+            fig.savefig(
+                os.path.join(out_dir, f'{fname}.png'),
+                dpi=150, bbox_inches='tight', facecolor=fig.get_facecolor()
+            )
             plt.close(fig)
             print(f"  Saved: {folder_name}/{fname}.png")
 
-            # ── companion CSV ──────────────────────────────────────────
+            # ── CSV ────────────────────────────────────────────────────
             csv_rows = []
             for region, d in zip(region_order, plot_data):
                 if len(d) == 0:
                     continue
                 csv_rows.append({
-                    'region':  region,
-                    'metric':  col,
-                    'filter':  suffix,
-                    'n':       len(d),
-                    'median':  d.median(),
-                    'mean':    d.mean(),
-                    'p25':     d.quantile(0.25),
-                    'p75':     d.quantile(0.75),
-                    'p05':     d.quantile(0.05),
-                    'p95':     d.quantile(0.95),
+                    'region': region, 'metric': col, 'filter': suffix,
+                    'n': len(d), 'median': d.median(), 'mean': d.mean(),
+                    'p25': d.quantile(0.25), 'p75': d.quantile(0.75),
+                    'p05': d.quantile(0.05), 'p95': d.quantile(0.95),
                 })
             pd.DataFrame(csv_rows).to_csv(
                 os.path.join(out_dir, f'{fname}.csv'), index=False
             )
-            
+
+    # ==================================================================
+    # LONDON SENSITIVITY PLOT
+    # 4 bars: progressively removing Very High → High → Medium → Low
+    # Same colour/label formatting, no grand median line
+    # ==================================================================
+    london_out = os.path.join(output_dir, '18_london_spread_sensitivity')
+    os.makedirs(london_out, exist_ok=True)
+
+    london = df[df['_region'].str.lower().str.contains('ln', na=False)].copy()
+
+    if london.empty:
+        print("  Skipping London sensitivity plot — no London data found")
+        return
+
+    # Each bar removes one more severity tier (cumulative exclusion)
+    london_filters = [
+        ('All postcodes',           london),
+        ('Excl. Very High (>60%)',  london[london['spread_severity'] != 'Very High (>60%)']),
+        ('Excl. High+ (>30%)',      london[~london['spread_severity'].isin(
+                                        ['High (30-60%)', 'Very High (>60%)'])]),
+        ('Excl. Medium+ (>15%)',    london[~london['spread_severity'].isin(
+                                        ['Medium (15-30%)', 'High (30-60%)', 'Very High (>60%)'])]),
+        ('Tight only (<5%)',        london[london['spread_severity'] == 'Tight (<5%)']),
+    ]
+    bar_labels = [lbl for lbl, _ in london_filters]
+    n_bars     = len(london_filters)
+
+    for col, ylabel in metrics:
+
+        if col not in y_limits:
+            continue
+
+        bar_medians = []
+        bar_ns      = []
+        bar_data    = []
+
+        for _, fdata in london_filters:
+            d = fdata[col].dropna()
+            bar_data.append(d)
+            bar_medians.append(d.median() if len(d) > 0 else np.nan)
+            bar_ns.append(len(d))
+
+        if all(np.isnan(m) for m in bar_medians):
+            print(f"  Skipping London sensitivity {col} — no data")
+            continue
+
+        ymin_ax, ymax_ax = y_limits[col]
+        vmin, vmax       = norm_limits[col]
+        norm             = plt.Normalize(vmin=vmin, vmax=vmax)
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        fig.patch.set_facecolor(STYLE['bg'])
+        ax.set_facecolor(STYLE['card'])
+
+        x_pos = np.arange(n_bars)
+
+        bars = ax.bar(
+            x_pos,
+            bar_medians,
+            width=0.6,
+            edgecolor='none',
+            zorder=3,
+        )
+
+        # Colour bars by their own median using the shared norm
+        for bar, med in zip(bars, bar_medians):
+            if np.isnan(med):
+                continue
+            rgba = cmap(norm(med))
+            bar.set_facecolor(rgba)
+            bar.set_alpha(0.88)
+
+        # Per-bar median labels
+        for i, (med, bar) in enumerate(zip(bar_medians, bars)):
+            if np.isnan(med):
+                continue
+
+            rgba      = cmap(norm(med))
+            txt_color = _label_colour(rgba)
+
+            # Place label just above the top of the bar
+            label_y = min(med * 1.02, ymax_ax * 0.97)
+
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                label_y,
+                f'{med:,.0f}',
+                ha='center',
+                va='bottom',
+                fontsize=10,
+                fontweight='bold',
+                color=txt_color,
+                zorder=5,
+            )
+
+        # n= below x-axis labels
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(
+            [f'{lbl}\n(n={n:,})' for lbl, n in zip(bar_labels, bar_ns)],
+            fontsize=9, color=STYLE['muted'],
+        )
+
+        ax.set_ylim(ymin_ax, ymax_ax)
+        ax.set_ylabel(ylabel, fontsize=12, color=STYLE['text'])
+        ax.tick_params(axis='y', labelsize=9, colors=STYLE['muted'])
+        ax.grid(True, alpha=0.35, axis='y', color='#E0DCD4')
+        ax.set_axisbelow(True)
+
+        for spine in ax.spines.values():
+            spine.set_edgecolor('#E0DCD4')
+
+        # Colorbar
+        sm   = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=ax, shrink=0.6, pad=0.01, aspect=30)
+        cbar.set_label(f'Median {ylabel}', fontsize=9, color=STYLE['text'])
+        cbar.ax.tick_params(labelsize=8, colors=STYLE['muted'])
+        cbar.outline.set_edgecolor('#E0DCD4')
+
+        fig.tight_layout()
+
+        fname = f'london_sensitivity_{col}'
+        fig.savefig(
+            os.path.join(london_out, f'{fname}.png'),
+            dpi=150, bbox_inches='tight', facecolor=fig.get_facecolor()
+        )
+        plt.close(fig)
+        print(f"  Saved: 18_london_spread_sensitivity/{fname}.png")
+
+        # CSV
+        csv_rows = []
+        for (lbl, _), d, med in zip(london_filters, bar_data, bar_medians):
+            if len(d) == 0:
+                continue
+            csv_rows.append({
+                'filter': lbl, 'metric': col,
+                'n': len(d), 'median': med, 'mean': d.mean(),
+                'p25': d.quantile(0.25), 'p75': d.quantile(0.75),
+                'p05': d.quantile(0.05), 'p95': d.quantile(0.95),
+            })
+        pd.DataFrame(csv_rows).to_csv(
+            os.path.join(london_out, f'{fname}.csv'), index=False
+        )       
             
 # ============================================================
 
